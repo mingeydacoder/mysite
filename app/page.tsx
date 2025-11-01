@@ -16,23 +16,34 @@ export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([])
 
   useEffect(() => {
-    const session = supabase.auth.session?.() ?? null
-    setUser(session?.user ?? null)
+    let mounted = true
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    // v2: async getSession()
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return
+      setUser(data.session?.user ?? null)
+    }).catch((err) => {
+      console.error('getSession error', err)
     })
 
-    fetchPosts()
+    // v2: onAuthStateChange 回傳的物件包含 data.subscription
+    const { data: subscriptionData } = supabase.auth.onAuthStateChange((_event, authSession) => {
+      setUser(authSession?.user ?? null)
+    })
 
+    // 清理
     return () => {
-      listener?.unsubscribe?.()
+      mounted = false
+      // 如果 subscription 存在，呼叫 unsubscribe()
+      subscriptionData?.subscription?.unsubscribe()
     }
   }, [])
 
   async function signUpOrSignIn(email: string) {
-    await supabase.auth.signIn({ email })
-    alert('已發送登入連結到你的信箱（magic link）')
+    // magic link
+    const { error } = await supabase.auth.signInWithOtp({ email })
+    if (error) console.error(error)
+    else alert('已發送登入連結到你的信箱（magic link）')
   }
 
   async function signOut() {
@@ -46,7 +57,7 @@ export default function HomePage() {
       .select('id, content, created_at, user_id')
       .order('created_at', { ascending: false })
     if (error) console.error(error)
-    else setPosts(data || [])
+    else setPosts((data as Post[]) || [])
   }
 
   async function createPost(e: FormEvent) {
@@ -103,7 +114,7 @@ export default function HomePage() {
       ) : (
         <ul>
           {posts.map((p) => (
-            <li key={p.id}>
+            <li key={p.id} style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: '#666' }}>
                 {new Date(p.created_at).toLocaleString()}
               </div>
