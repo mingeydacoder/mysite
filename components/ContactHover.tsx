@@ -9,7 +9,7 @@ interface Props {
   right?: number // px offset from right
 }
 
-export default function ContactHover({ content, top = 16, right = 320 }: Props) {
+export default function ContactHover({ content, top = 16, right = 16 }: Props) {
   const [open, setOpen] = useState(false)
   const timeoutRef = useRef<number | null>(null)
 
