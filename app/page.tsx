@@ -1,3 +1,4 @@
+// app/page.tsx
 'use client'
 
 import { useEffect, useState, FormEvent } from 'react'
@@ -9,7 +10,7 @@ interface Post {
   content: string
   created_at: string
   user_id: string
-  profiles?: { display_name?: string }  // supabase join result
+  profiles?: { display_name?: string }
 }
 
 export default function HomePage() {
@@ -19,137 +20,158 @@ export default function HomePage() {
   const [profile, setProfile] = useState<{ display_name?: string } | null>(null)
   const [nameInput, setNameInput] = useState('')
   const [isSavingName, setIsSavingName] = useState(false)
+  const [isPosting, setIsPosting] = useState(false)
+  const [isSendingLink, setIsSendingLink] = useState(false)
 
   useEffect(() => {
     const sb = createBrowserSupabaseClient()
     if (!sb) return
     setSupabase(sb)
 
-    sb.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null)).catch(console.error)
+    // get initial session
+    sb.auth.getSession().then(({ data }) => {
+      const uid = data.session?.user?.id
+      setUser(data.session?.user ?? null)
+      if (uid) fetchProfileAndPosts(sb, uid)
+    }).catch(console.error)
 
-    const { data: subscriptionData } = sb.auth.onAuthStateChange((_e, session) => {
+    // listen auth changes
+    const { data: subscriptionData } = sb.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfileAndPosts(sb, session.user.id)
+      if (session?.user?.id) fetchProfileAndPosts(sb, session.user.id)
       else {
         setProfile(null)
         setPosts([])
       }
     })
 
-    // initial fetch (if already logged in)
-    sb.auth.getSession().then(({ data }) => {
-      const uid = data.session?.user?.id
-      if (uid) fetchProfileAndPosts(sb, uid)
-    }).catch(console.error)
-
     return () => subscriptionData?.subscription?.unsubscribe?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-async function signOut() {
-  if (!supabase) return
-  await supabase.auth.signOut()
-  setUser(null)
-  setProfile(null)
-  setPosts([])
-}
-
-  // fetch profile and posts (join profiles)
-// 把這個函式貼到你的檔案，替換掉原本使用 nested select 的 fetchProfileAndPosts / fetchPosts
-async function fetchProfileAndPosts(sb: SupabaseClient, uid: string) {
-  // 1) 先抓 posts（單表）
-  const { data: postsData, error: postsErr } = await sb
-    .from('posts')
-    .select('id, content, created_at, user_id')
-    .order('created_at', { ascending: false })
-
-  if (postsErr) {
-    console.error('fetch posts error', postsErr)
-    setPosts([]) // 保險起見清空
-    return
+  // ---------- auth helpers ----------
+  async function signUpOrSignIn(email: string) {
+    if (!supabase) return alert('Supabase client not ready')
+    try {
+      setIsSendingLink(true)
+      const { error } = await supabase.auth.signInWithOtp({ email })
+      if (error) {
+        console.error('sign in error', error)
+        alert('發送登入連結失敗')
+      } else {
+        alert('已發送登入連結到你的信箱（請檢查收件匣）')
+      }
+    } finally {
+      setIsSendingLink(false)
+    }
   }
 
-  const posts = (postsData as Post[]) || []
-
-  // 2) 取出所有不重複的 user_id
-  const userIds = Array.from(new Set(posts.map(p => p.user_id).filter(Boolean)))
-
-  // 如果沒有 userIds，直接設定 posts
-  if (userIds.length === 0) {
-    setPosts(posts)
-    return
+  async function signOut() {
+    if (!supabase) return
+    await supabase.auth.signOut()
+    setUser(null)
+    setProfile(null)
+    setPosts([])
   }
 
-  // 3) 批次抓 profiles（一次請求）
-  const { data: profilesData, error: profilesErr } = await sb
-    .from('profiles')
-    .select('user_id, display_name')
-    .in('user_id', userIds)
+  // ---------- fetch posts & profiles (robust) ----------
+  async function fetchProfileAndPosts(sb: SupabaseClient, uid: string) {
+    // fetch posts
+    const { data: postsData, error: postsErr } = await sb
+      .from('posts')
+      .select('id, content, created_at, user_id')
+      .order('created_at', { ascending: false })
 
-  if (profilesErr) {
-    console.error('fetch profiles error', profilesErr)
-    // 即使 profiles 錯誤，也先把 posts 顯示（顯示匿名）
-    const postsWithAnon = posts.map(p => ({ ...p, profiles: { display_name: undefined } }))
-    setPosts(postsWithAnon)
-    return
+    if (postsErr) {
+      console.error('fetch posts error', postsErr)
+      setPosts([])
+      return
+    }
+
+    const postsList = (postsData as Post[]) || []
+    const userIds = Array.from(new Set(postsList.map(p => p.user_id).filter(Boolean)))
+
+    // fetch profiles in batch
+    if (userIds.length === 0) {
+      setPosts(postsList)
+    } else {
+      const { data: profilesData, error: profilesErr } = await sb
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds)
+
+      if (profilesErr) {
+        console.error('fetch profiles error', profilesErr)
+        // still show posts, but without names
+        setPosts(postsList.map(p => ({ ...p, profiles: { display_name: undefined } })))
+      } else {
+        const profiles = (profilesData ?? []) as { user_id: string; display_name?: string }[]
+        const nameById = new Map<string, string | undefined>()
+        for (const pr of profiles) nameById.set(pr.user_id, pr.display_name)
+
+        const postsWithProfiles = postsList.map(p => ({
+          ...p,
+          profiles: { display_name: nameById.get(p.user_id) ?? undefined },
+        }))
+        setPosts(postsWithProfiles)
+      }
+    }
+
+    // fetch current user's profile (if uid matches)
+    const { data: myProfile } = await sb.from('profiles').select('display_name').eq('user_id', uid).maybeSingle()
+    setProfile(myProfile ?? null)
+    if (myProfile?.display_name) setNameInput(myProfile.display_name)
   }
 
-  const profiles = (profilesData ?? []) as { user_id: string; display_name?: string }[]
-
-  // 4) 建 Map 方便 lookup
-  const nameById = new Map<string, string | undefined>()
-  for (const pr of profiles) {
-    nameById.set(pr.user_id, pr.display_name)
-  }
-
-  // 5) 把 display_name 對應回 posts
-  const postsWithProfiles = posts.map(p => ({
-    ...p,
-    profiles: { display_name: nameById.get(p.user_id) ?? undefined },
-  }))
-
-  setPosts(postsWithProfiles)
-}
-
-
-  // upsert (insert or update) profile
+  // ---------- profile upsert ----------
   async function saveDisplayName(e?: FormEvent) {
     if (e) e.preventDefault()
     if (!supabase || !user) return alert('請先登入')
-    const uid = user.id
     const display_name = nameInput.trim()
     if (!display_name) return alert('請輸入名稱')
 
     setIsSavingName(true)
-    // use upsert to insert or update
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ user_id: uid, display_name, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
-    setIsSavingName(false)
-    if (error) {
-      console.error('save profile error', error)
-      alert('儲存名稱失敗')
-    } else {
-      setProfile({ display_name })
-      // refresh posts to get display_name in list if using join
-      fetchProfileAndPosts(supabase, uid)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ user_id: user.id, display_name, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+      if (error) {
+        console.error('save profile error', error)
+        alert('儲存名稱失敗')
+      } else {
+        setProfile({ display_name })
+        // refresh posts so names appear
+        await fetchProfileAndPosts(supabase, user.id)
+      }
+    } finally {
+      setIsSavingName(false)
     }
   }
 
-  // create post (uses user.id)
+  // ---------- create post ----------
   async function createPost(e: FormEvent) {
     e.preventDefault()
     if (!supabase || !user) return alert('請先登入')
     const form = e.target as HTMLFormElement
     const content = (form.content as HTMLTextAreaElement).value.trim()
-    if (!content) return
-    const { error } = await supabase.from('posts').insert({ content, user_id: user.id })
-    if (error) console.error('insert post error', error)
-    else {
-      form.reset()
-      fetchProfileAndPosts(supabase, user.id)
+    if (!content) return alert('請輸入內容')
+
+    setIsPosting(true)
+    try {
+      const { error } = await supabase.from('posts').insert({ content, user_id: user.id })
+      if (error) {
+        console.error('insert post error', error)
+        alert('發佈失敗')
+      } else {
+        form.reset()
+        await fetchProfileAndPosts(supabase, user.id)
+      }
+    } finally {
+      setIsPosting(false)
     }
   }
 
+  // ---------- UI ----------
   return (
     <div className="container py-10">
       <h1 className="text-2xl font-semibold mb-6">我的小站</h1>
@@ -159,7 +181,9 @@ async function fetchProfileAndPosts(sb: SupabaseClient, uid: string) {
           <p className="mb-3">輸入 Email 登入（magic link）</p>
           <form onSubmit={(e) => { e.preventDefault(); const email = (e.target as HTMLFormElement).email.value; signUpOrSignIn(email) }}>
             <input name="email" type="email" placeholder="you@example.com" className="input mb-3" required />
-            <button className="btn btn-primary">發送登入連結</button>
+            <button className="btn btn-primary" disabled={isSendingLink} aria-busy={isSendingLink}>
+              {isSendingLink ? '發送中...' : '發送登入連結'}
+            </button>
           </form>
         </div>
       ) : (
@@ -176,7 +200,6 @@ async function fetchProfileAndPosts(sb: SupabaseClient, uid: string) {
               </div>
             </div>
 
-            {/* 如果沒有 display_name，顯示填寫表單 */}
             {!profile?.display_name && (
               <form onSubmit={saveDisplayName} className="space-y-3">
                 <label className="block text-sm kv">設定顯示名稱（其他人看到的名稱）</label>
@@ -191,15 +214,15 @@ async function fetchProfileAndPosts(sb: SupabaseClient, uid: string) {
             )}
           </div>
 
-          {/* 發文表單 */}
           <div className="card mb-6">
             <form onSubmit={createPost}>
               <textarea name="content" className="input mb-3" rows={4} placeholder="寫點什麼..." />
-              <button type="submit" className="btn btn-primary w-full">發佈</button>
+              <button type="submit" className="btn btn-primary w-full" disabled={isPosting} aria-busy={isPosting}>
+                {isPosting ? '發佈中...' : '發佈'}
+              </button>
             </form>
           </div>
 
-          {/* 貼文清單 */}
           <div className="card">
             <h2 className="text-lg font-semibold mb-4">貼文</h2>
             {posts.length === 0 ? <p className="kv">目前沒有貼文</p> : (
