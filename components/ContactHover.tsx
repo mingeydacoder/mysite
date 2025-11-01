@@ -60,7 +60,7 @@ export default function ContactHover({ content, top = 16, right = 320 }: Props) 
             position: 'absolute',
             right: 0,
             marginTop: 8,
-            minWidth: 220,
+            minWidth: 250,
             zIndex: 60,
           }}
         >
@@ -77,8 +77,8 @@ export default function ContactHover({ content, top = 16, right = 320 }: Props) 
               {content ?? (
                 <>
                   <div className="font-medium text-gray-900 mb-1">聯絡方式</div>
-                  <div className="kv mb-1">Email: <a className="text-indigo-600" href="mailto:you@example.com">you@example.com</a></div>
-                  <div className="kv">Line: @yourlineid</div>
+                  <div className="kv mb-1">Email: <a className="text-indigo-600">allenchen0121@gmail.com</a></div>
+                  <div className="kv">Line: <a className="text-indigo-600">0970555098</a></div>
                 </>
               )}
             </div>

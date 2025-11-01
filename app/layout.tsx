@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="container py-10">
+        <div className="container py-5">
           {/* 把元件放在最外層（fixed 絕對定位於視窗右上） */}
           <ContactHover />
         </div>

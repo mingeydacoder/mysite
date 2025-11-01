@@ -191,8 +191,8 @@ export default function HomePage() {
   const defaultAvatar = SITE_OWNER.avatar || '/default-avatar.png' // 可改
 
   return (
-    <div className="container py-10">
-      <h1 className="text-3xl font-extrabold font-mono tracking-tight text-indigo-700 mb-4">
+    <div className="container py+10">
+      <h1 className="text-4xl font-extrabold font-mono tracking-tight text-indigo-700 mb-4">
         Intro Page
       </h1>
 
