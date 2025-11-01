@@ -433,21 +433,6 @@ export default function HomePage() {
             </div>
 
 
-
-
-            <div className="card">
-              <form onSubmit={createPost}>
-                <textarea name="content" className="input mb-3" rows={4} placeholder="寫點什麼..." />
-                <button
-                  type="submit"
-                  className="btn btn-primary w-full"
-                  disabled={isPosting}
-                >
-                  {isPosting ? '發佈中...' : '發佈'}
-                </button>
-              </form>
-            </div>
-
             <div className="card">
               <h2 className="text-lg font-semibold mb-4">貼文</h2>
               {posts.length === 0 ? (
