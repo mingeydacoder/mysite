@@ -153,3 +153,80 @@ html, body {
   background-size: 400% 400%;
   animation: gradientShift 10s ease infinite;
 }
+
+/* fade-up animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* accessible: 如果使用者偏好少動畫，就關閉 */
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* 預設 class */
+.fade-up {
+  opacity: 0;
+  transform: translateY(10px);
+  animation-name: fadeUp;
+  animation-duration: 3000ms;
+  animation-timing-function: cubic-bezier(.2,.8,.2,1);
+  animation-fill-mode: forwards;
+}
+
+/* helper: 支援 delay（ms）— 你可以擴充更多 delay class */
+.fade-delay-0 { animation-delay: 0ms; }
+.fade-delay-75 { animation-delay: 75ms; }
+.fade-delay-150 { animation-delay: 150ms; }
+.fade-delay-225 { animation-delay: 225ms; }
+.fade-delay-300 { animation-delay: 300ms; }
+.fade-delay-375 { animation-delay: 375ms; }
+.fade-delay-450 { animation-delay: 450ms; }
+
+
+@keyframes fadeLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px); /* 從左邊往右 */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px); /* 從右邊往左 */
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 左→右浮現 */
+.fade-left {
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: fadeLeft 1s ease-out forwards;
+}
+
+/* 右→左浮現 */
+.fade-right {
+  opacity: 0;
+  transform: translateX(20px);
+  animation: fadeRight 1s ease-out forwards;
+}

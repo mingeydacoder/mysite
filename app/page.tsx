@@ -4,7 +4,8 @@
 import { useEffect, useState, FormEvent } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createBrowserSupabaseClient } from '../lib/supabaseClient'
-import { RatingGroup } from "@chakra-ui/react"
+import FadeIn from '../components/FadeIn'
+
 
 
 interface Post {
@@ -235,12 +236,15 @@ export default function HomePage() {
 
   return (
     <div className="container py+10">
+      <FadeIn delay={200}>
       <h1 className="text-4xl font-extrabold font-mono tracking-tight text-indigo-700 mb-4">
         Intro Page
       </h1>
 
       {/* ---------- 靜態網站主自我介紹（所有人可見） ---------- */}
-      <div className="card mb-6">
+      
+
+        <div className="card mb-6">
         <div className="flex items-start gap-4">
           <div style={{ minWidth: 96 }}>
             <img
@@ -256,6 +260,10 @@ export default function HomePage() {
         </div>
       </div>
 
+      </FadeIn>
+
+
+      <FadeIn delay={300}>
       {!user ? (
         /* 未登入：登入卡 + 公告外框（多個公告）並排（mobile 會堆疊） */
         <div className="flex flex-col md:flex-row items-stretch gap-6 justify-center">
@@ -499,6 +507,7 @@ export default function HomePage() {
           </aside>
         </div>
       )}
+      </FadeIn>
       {/* Announcement Modal */}
       {selectedAnn && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">

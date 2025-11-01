@@ -5,7 +5,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import Link from 'next/link'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createBrowserSupabaseClient } from '../../lib/supabaseClient'
-import { RatingGroup } from "@chakra-ui/react"
+
 
 interface Favorite {
   id: string
