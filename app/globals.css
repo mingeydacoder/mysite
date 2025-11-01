@@ -1,6 +1,7 @@
 @import "tailwindcss";
+/* app/globals.css (保守替換版) */
 
-/* ---------- CSS 變數 (自行管理顏色/間距) ---------- */
+/* ---------- CSS 變數：預設 (淺色) ---------- */
 :root {
   --bg: #f8fafc;
   --card: #ffffff;
@@ -13,7 +14,19 @@
   --shadow-sm: 0 1px 2px rgba(2,6,23,0.06);
 }
 
-/* 全域基礎 */
+/* ---------- dark mode 變數覆寫（當 html 帶 .dark 時） ---------- */
+html.dark {
+  --bg: #0b1220;
+  --card: #0f1724;
+  --muted: #9aa3b2;
+  --primary: #e6eefc;
+  --primary-hover: #c7d2fe;
+  --text: #e6eefc;
+  --border: rgba(255,255,255,0.06);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.45);
+}
+
+/* ---------- 全域基礎 ---------- */
 html, body {
   height: 100%;
   background: transparent;
@@ -21,18 +34,26 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin: 0;
+  padding: 0;
 }
 
+/* container 基本設定（改用變數與 tailwind 互補） */
 .container {
-  background: transparent !important;
+  background: transparent;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
-/* helper colors as classes (不依賴 tailwind.config) */
-.text-primary { color: var(--primary) !important; }
-.bg-primary { background-color: var(--primary) !important; }
-.text-muted { color: var(--muted) !important; }
+/* helper colors as classes (改為用變數，移除 !important) */
+.text-primary { color: var(--primary); }
+.bg-primary { background-color: var(--primary); }
+.text-muted { color: var(--muted); }
 
-/* ---------- 常用元件樣式（取代 @apply bg-primary 等） ---------- */
+/* ---------- 按鈕 / 元件（保留你原本的風格，但改用變數） ---------- */
 
 /* 按鈕基底 */
 .btn {
@@ -75,30 +96,28 @@ html, body {
   box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
 }
 
-
 /* 次要/空心按鈕 */
 .btn-ghost {
-  background-color: #fafafa; /* 淺灰底，與白底有區別 */
-  border: 1px solid rgba(73, 16, 67, 0.1); /* 微邊框 */
-  box-shadow: 0 1px 3px rgba(73, 16, 67, 0.05);
-  color: #2b0c28;
+  background-color: var(--card);
+  border: 1px solid rgba(73, 16, 67, 0.06);
+  box-shadow: 0 1px 3px rgba(73, 16, 67, 0.03);
+  color: var(--text);
   transition: all 0.25s ease;
 }
 
 .btn-ghost:hover {
-  background-color: #fff;
-  border-color: rgba(73, 16, 67, 0.2);
-  box-shadow: 0 4px 10px rgba(73, 16, 67, 0.15);
+  background-color: rgba(255,255,255,0.02);
+  border-color: rgba(73, 16, 67, 0.12);
+  box-shadow: 0 4px 10px rgba(73, 16, 67, 0.08);
   transform: translateY(-2px);
 }
 
 .btn-ghost:active {
   transform: translateY(0);
-  box-shadow: 0 2px 5px rgba(73, 16, 67, 0.1);
+  box-shadow: 0 2px 5px rgba(73, 16, 67, 0.05);
 }
 
-
-/* 輸入 / textarea 基底 */
+/* 輸入 / textarea 基底（以變數為基底） */
 .input, textarea {
   width: 100%;
   padding: 0.5rem;
@@ -106,12 +125,12 @@ html, body {
   border-radius: 0.375rem;
   outline: none;
   font-size: 0.95rem;
-  background: white;
+  background: var(--card);
   color: var(--text);
 }
 .input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
-  border-color: var(--primary);
+  border-color: var(--primary-hover);
 }
 
 /* 卡片 */
@@ -132,23 +151,14 @@ html, body {
 /* 調整列表、貼文樣式 */
 .post-item {
   padding: 0.9rem;
-  background: #ffffff;
+  background: var(--card);
   border-radius: 0.5rem;
-  border: 1px solid #f1f5f9;
+  border: 1px solid rgba(241,245,249,0.6);
 }
 .post-item .meta {
   font-size: 0.85rem;
   color: var(--muted);
   margin-bottom: 0.5rem;
-}
-
-/* container utility 可以覆蓋 Tailwind 的 container 行為 */
-.container {
-  max-width: 1100px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
 }
 
 /* footer small */
@@ -157,6 +167,7 @@ html, body {
   font-size: 0.9rem;
 }
 
+/* 動畫（保留你原本設定） */
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -181,7 +192,6 @@ html, body {
   }
 }
 
-/* accessible: 如果使用者偏好少動畫，就關閉 */
 @media (prefers-reduced-motion: reduce) {
   .fade-up {
     animation: none !important;
@@ -190,7 +200,6 @@ html, body {
   }
 }
 
-/* 預設 class */
 .fade-up {
   opacity: 0;
   transform: translateY(10px);
@@ -200,7 +209,7 @@ html, body {
   animation-fill-mode: forwards;
 }
 
-/* helper: 支援 delay（ms）— 你可以擴充更多 delay class */
+/* fade delay helpers */
 .fade-delay-0 { animation-delay: 0ms; }
 .fade-delay-75 { animation-delay: 75ms; }
 .fade-delay-150 { animation-delay: 150ms; }
@@ -209,11 +218,10 @@ html, body {
 .fade-delay-375 { animation-delay: 375ms; }
 .fade-delay-450 { animation-delay: 450ms; }
 
-
 @keyframes fadeLeft {
   from {
     opacity: 0;
-    transform: translateX(-20px); /* 從左邊往右 */
+    transform: translateX(-20px);
   }
   to {
     opacity: 1;
@@ -224,7 +232,7 @@ html, body {
 @keyframes fadeRight {
   from {
     opacity: 0;
-    transform: translateX(20px); /* 從右邊往左 */
+    transform: translateX(20px);
   }
   to {
     opacity: 1;
@@ -232,16 +240,19 @@ html, body {
   }
 }
 
-/* 左→右浮現 */
 .fade-left {
   opacity: 0;
   transform: translateX(-20px);
   animation: fadeLeft 1s ease-out forwards;
 }
 
-/* 右→左浮現 */
 .fade-right {
   opacity: 0;
   transform: translateX(20px);
   animation: fadeRight 1s ease-out forwards;
+}
+
+/* 讓主題切換時，全站背景與文字顏色柔和過渡 */
+html, body, .card, .btn, .input, textarea {
+  transition: background-color 0.8s ease, color 0.8s ease, border-color 0.8s ease;
 }

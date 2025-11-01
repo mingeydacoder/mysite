@@ -2,6 +2,10 @@
 import './globals.css'
 import ContactHover from '../components/ContactHover' // 路徑依你專案調整
 import FadeIn from '../components/FadeIn'
+import { Sun, Moon } from 'lucide-react'  // ✅ 圖示建議使用 lucide-react
+import ThemeToggle from '../components/ThemeToggle'
+
+
 
 
 import type { ReactNode } from 'react'
@@ -10,6 +14,8 @@ export const metadata = {
   title: "Mingey's Website",
   description: 'Next.js + Supabase 個人主頁',
 }
+
+
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -22,6 +28,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           backgroundAttachment: 'fixed',              // 捲動時固定
           backgroundPosition: 'center',               // 置中
         }}>
+        <ThemeToggle />
+        
         <div className="fixed inset-0 bg-black/40 pointer-events-none z-0" />
         <div className="relative z-10"></div>
         

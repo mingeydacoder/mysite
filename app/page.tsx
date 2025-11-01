@@ -265,8 +265,8 @@ export default function HomePage() {
             />
           </div>
           <div className="flex-1">
-            <div className="text-lg font-semibold">{SITE_OWNER.name}</div>
-            <div className="kv text-sm mt-1">{SITE_OWNER.bio}</div>
+            <div className="text-3xl font-semibold">{SITE_OWNER.name}</div>
+            <div className="kv text-sm mt-3">{SITE_OWNER.bio}</div>
           </div>
         </div>
       </div>
@@ -392,7 +392,7 @@ export default function HomePage() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900">{a.title}</div>
+                          <div className="kv font-bold text-gray-600 mt-1 line-clamp-2">{a.title}</div>
                           <div className="kv text-sm text-gray-600 mt-1 line-clamp-2">{a.summary}</div>
                         </div>
                         <div className="text-xs text-gray-400 ml-3">{a.date}</div>
