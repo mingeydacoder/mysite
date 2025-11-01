@@ -4,6 +4,8 @@
 import { useEffect, useState, FormEvent } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createBrowserSupabaseClient } from '../lib/supabaseClient'
+import { RatingGroup } from "@chakra-ui/react"
+
 
 interface Post {
   id: string
@@ -31,6 +33,7 @@ const SITE_OWNER = {
   avatar: '/site-owner-avatar.png',
   bio: '注意：一般用戶無需註冊帳號'
 }
+
 
 export default function HomePage() {
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null)

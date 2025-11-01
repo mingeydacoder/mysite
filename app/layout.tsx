@@ -1,6 +1,8 @@
 // app/layout.tsx
 import './globals.css'
 import ContactHover from '../components/ContactHover' // 路徑依你專案調整
+import { Provider } from "../components/ui/provider"
+
 
 import type { ReactNode } from 'react'
 
@@ -11,8 +13,9 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="zh-TW">
+    <html lang="zh-TW" suppressHydrationWarning>
       <body>
+        
         <header className="dynamic-bg border-b text-white">
           <div className="container flex items-center justify-between h-16">
             <a className="text-lg font-semibold text-black" href="/">🤗 Mingey's Website 🤗</a>
@@ -30,9 +33,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         <footer className="border-t mt-12">
           <div className="container py-6 text-center text-sm text-muted">
-            © {new Date().getFullYear()} MySite — 個人非商業用途
+            © {new Date().getFullYear()} YenLun Chen. All rights reserved.
           </div>
         </footer>
+
+        
       </body>
     </html>
   )
