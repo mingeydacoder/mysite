@@ -13,15 +13,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-TW">
       <body>
-        <header className="bg-white border-b">
+        <header className="dynamic-bg border-b text-white">
           <div className="container flex items-center justify-between h-16">
-            <a className="text-lg font-semibold text-primary" href="/">🤗 Mingey's Website 🤗</a>
-            
-            <nav className="flex items-center gap-3">
-            </nav>
-            
+            <a className="text-lg font-semibold text-black" href="/">🤗 Mingey's Website 🤗</a>
+            <nav className="flex items-center gap-3"></nav>
           </div>
         </header>
+
 
         <div className="container py-5">
           {/* 把元件放在最外層（fixed 絕對定位於視窗右上） */}

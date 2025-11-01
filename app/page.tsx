@@ -17,11 +17,19 @@ interface Profile {
   display_name?: string
 }
 
+interface Announcement {
+  id: string
+  title: string
+  summary?: string
+  content?: string
+  date?: string
+}
+
 const SITE_OWNER = {
-  name: 'HI! This is a website created by Allen Chen',
+  name: 'Welcome!!',
   // 建議放 public 底下的圖片路徑或外部 URL
   avatar: '/site-owner-avatar.png',
-  bio: 'from National Taiwan University.'
+  bio: '注意：一般用戶無需註冊帳號'
 }
 
 export default function HomePage() {
@@ -40,6 +48,38 @@ export default function HomePage() {
   const [isAuthLoading, setIsAuthLoading] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
   const [isForgotSending, setIsForgotSending] = useState(false)
+
+  // announcement modal
+  const [selectedAnn, setSelectedAnn] = useState<Announcement | null>(null)
+
+  // sample announcements (site-wide). 可改成從 DB 讀取
+  const announcements: Announcement[] = [
+    {
+      id: 'a1',
+      title: '2026加州自由行',
+      summary: '懶人包網頁已上線，內含行程規劃與注意事項',
+      content: `
+        <a href="https://allenchen0121s-private-organizat.gitbook.io/2026_california_trip"
+          target="_blank" rel="noopener noreferrer" class="text-indigo-600">網頁請點此
+        </a>
+      `,
+      date: '2025-11-01',
+    },
+    {
+      id: 'a2',
+      title: '活動：週末線上聚會',
+      summary: '本週六 20:00 舉辦線上聚會，歡迎加入討論與問答。',
+      content: '地點：Discord #general 頻道。主題：新功能分享與 Q&A。歡迎帶問題來！',
+      date: '2025-10-28',
+    },
+    {
+      id: 'a3',
+      title: '公告：新功能上線',
+      summary: '已上線：收藏功能、個人化顯示名稱與留言系統優化。',
+      content: '我們針對留言系統做了優化，提升載入效能與 UX。若遇到任何問題，請回報。',
+      date: '2025-10-20',
+    },
+  ]
 
   useEffect(() => {
     const sb = createBrowserSupabaseClient()
@@ -213,95 +253,142 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ---------- 原本內容（登入 / 註冊 / 發文 / 貼文 / 側欄） ---------- */}
       {!user ? (
-        <div className="flex justify-center items-center min-h-[40vh]">
-          <div className="card max-w-md space-y-4">
-            <div className="flex gap-2 mb-3">
-              <button
-                className={`btn ${view === 'sign-in' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setView('sign-in')}
-              >
-                登入
-              </button>
-              <button
-                className={`btn ${view === 'sign-up' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setView('sign-up')}
-              >
-                註冊
-              </button>
-            </div>
-
-            {view === 'sign-in' ? (
-              <form onSubmit={(e) => { e.preventDefault(); signIn() }} className="space-y-3">
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  placeholder="Email"
-                  className="input"
-                  required
-                />
-                <input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="password"
-                  placeholder="Password"
-                  className="input"
-                  required
-                />
-                <button type="submit" className="btn btn-primary w-full" disabled={isAuthLoading}>
-                  {isAuthLoading ? '登入中...' : '登入'}
+        /* 未登入：登入卡 + 公告外框（多個公告）並排（mobile 會堆疊） */
+        <div className="flex flex-col md:flex-row items-stretch gap-6 justify-center">
+          {/* 登入卡（左） */}
+          <div className="w-full md:w-auto flex flex justify-center">
+            <div className="card w-full max-w-md space-y-4">
+              <div className="flex gap-2 mb-3">
+                <button
+                  className={`btn ${view === 'sign-in' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setView('sign-in')}
+                >
+                  登入
                 </button>
+                <button
+                  className={`btn ${view === 'sign-up' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setView('sign-up')}
+                >
+                  註冊
+                </button>
+              </div>
 
-                <div className="pt-2 text-sm">
-                  <label className="kv">忘記密碼？</label>
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      type="email"
-                      placeholder="you@example.com"
-                      className="input"
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={sendResetPasswordEmail}
-                      disabled={isForgotSending}
-                    >
-                      {isForgotSending ? '發送中...' : 'Reset'}
-                    </button>
+              {view === 'sign-in' ? (
+                <form onSubmit={(e) => { e.preventDefault(); signIn() }} className="space-y-3">
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    placeholder="Email"
+                    className="input"
+                    required
+                  />
+                  <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type="password"
+                    placeholder="Password"
+                    className="input"
+                    required
+                  />
+                  <button type="submit" className="btn btn-primary w-full" disabled={isAuthLoading}>
+                    {isAuthLoading ? '登入中...' : '登入'}
+                  </button>
+
+                  <div className="pt-40 text-sm">
+                    <label className="kv">忘記密碼？</label>
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        type="email"
+                        placeholder="you@example.com"
+                        className="input"
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={sendResetPasswordEmail}
+                        disabled={isForgotSending}
+                      >
+                        {isForgotSending ? '發送中...' : 'Reset'}
+                      </button>
+                    </div>
                   </div>
+                </form>
+              ) : (
+                <form onSubmit={(e) => { e.preventDefault(); signUp() }} className="space-y-3">
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    placeholder="Email"
+                    className="input"
+                    required
+                  />
+                  <input
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type="password"
+                    placeholder="Password (min 6)"
+                    className="input"
+                    minLength={6}
+                    required
+                  />
+                  <button type="submit" className="btn btn-primary w-full" disabled={isAuthLoading}>
+                    {isAuthLoading ? '註冊中...' : '註冊'}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+
+          {/* 公告外框（右）：寬高與登入卡一致，內部有多個小公告卡 */}
+          <div className="w-full md:w-auto flex flex justify-center">
+            <div className="card w-full max-w-md p-0 flex flex-col">
+              {/* 外框標題 */}
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <div className="text-lg font-semibold">最新公告</div>
+                  <div className="kv text-sm text-gray-500">點擊查看完整內容</div>
                 </div>
-              </form>
-            ) : (
-              <form onSubmit={(e) => { e.preventDefault(); signUp() }} className="space-y-3">
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  placeholder="Email"
-                  className="input"
-                  required
-                />
-                <input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="password"
-                  placeholder="Password (min 6)"
-                  className="input"
-                  minLength={6}
-                  required
-                />
-                <button type="submit" className="btn btn-primary w-full" disabled={isAuthLoading}>
-                  {isAuthLoading ? '註冊中...' : '註冊'}
-                </button>
-              </form>
-            )}
+                <div className="text-xs text-gray-400">{announcements.length} 則</div>
+              </div>
+
+              {/* 公告列表（若過長則滾動） */}
+              <div className="p-3 overflow-y-auto" style={{ maxHeight: 360 }}>
+                <div className="space-y-3">
+                  {announcements.map((a) => (
+                    <div
+                      key={a.id}
+                      className="border rounded-md p-3 hover:bg-gray-50 cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedAnn(a)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') setSelectedAnn(a) }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{a.title}</div>
+                          <div className="kv text-sm text-gray-600 mt-1 line-clamp-2">{a.summary}</div>
+                        </div>
+                        <div className="text-xs text-gray-400 ml-3">{a.date}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 外框底部（選用） */}
+              <div className="p-3 border-t border-gray-100 text-sm text-gray-500">
+                <div></div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
+        /* 已登入的原本內容（維持你現有的 layout） */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <section className="md:col-span-2 space-y-6">
             <div className="card">
@@ -331,6 +418,22 @@ export default function HomePage() {
                 </form>
               )}
             </div>
+
+            <div className="card">
+              <form onSubmit={createPost}>
+                <textarea name="content" className="input mb-3" rows={4} placeholder="寫點什麼..." />
+                <button
+                  type="submit"
+                  className="btn btn-primary w-full"
+                  disabled={isPosting}
+                >
+                  {isPosting ? '發佈中...' : '發佈'}
+                </button>
+              </form>
+            </div>
+
+
+
 
             <div className="card">
               <form onSubmit={createPost}>
@@ -381,17 +484,17 @@ export default function HomePage() {
                 <button
                   type="button"
                   className="btn btn-ghost"
-                  onClick={() => window.location.href = '/settings'}
+                  onClick={() => window.open('https://hazuhaxi.github.io/personal_website/', '_blank', 'noopener')}
                 >
-                  我的設定
+                  個人網頁
                 </button>
 
                 <button
                   type="button"
                   className="btn btn-ghost"
-                  onClick={() => window.open('https://example.com', '_blank', 'noopener')}
+                  onClick={() => window.open('https://chatgpt.com', '_blank', 'noopener')}
                 >
-                  參考文件（外部）
+                  ChatGPT
                 </button>
 
                 {user?.email === 'you@example.com' && (
@@ -406,6 +509,31 @@ export default function HomePage() {
               </div>
             </div>
           </aside>
+        </div>
+      )}
+      {/* Announcement Modal */}
+      {selectedAnn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedAnn(null)} />
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-[min(96%,900px)] z-60 p-6 relative">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h2 className="text-xl font-bold text-gray-900">{selectedAnn.title}</h2>
+                <div className="text-sm text-gray-500 mt-1">{selectedAnn.date}</div>
+              </div>
+              <button className="btn btn-ghost" onClick={() => setSelectedAnn(null)}>關閉</button>
+            </div>
+
+            <div
+            className="mt-4 text-gray-700 whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: selectedAnn.content || '' }}
+          />
+
+
+            <div className="mt-6 flex justify-end">
+              <button className="btn btn-primary" onClick={() => setSelectedAnn(null)}>我知道了</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
