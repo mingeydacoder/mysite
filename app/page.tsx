@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, FormEvent } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserSupabaseClient } from '../lib/supabaseClient'
 
 interface Post {
   id: string
@@ -11,48 +12,42 @@ interface Post {
 }
 
 export default function HomePage() {
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
   const [user, setUser] = useState<any>(null)
   const [content, setContent] = useState('')
   const [posts, setPosts] = useState<Post[]>([])
 
   useEffect(() => {
-    let mounted = true
+    // 只在 client 建立 supabase client
+    const sb = createBrowserSupabaseClient()
+    if (!sb) {
+      console.error('Supabase client not available (missing env?)')
+      return
+    }
+    setSupabase(sb)
 
-    // v2: async getSession()
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return
+    // 取得目前 session（v2）
+    sb.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null)
-    }).catch((err) => {
-      console.error('getSession error', err)
-    })
+    }).catch(console.error)
 
-    // v2: onAuthStateChange 回傳的物件包含 data.subscription
-    const { data: subscriptionData } = supabase.auth.onAuthStateChange((_event, authSession) => {
+    const { data: subscriptionData } = sb.auth.onAuthStateChange((_event, authSession) => {
       setUser(authSession?.user ?? null)
     })
 
-    // 清理
+    // initial fetch
+    fetchPosts(sb)
+
     return () => {
-      mounted = false
-      // 如果 subscription 存在，呼叫 unsubscribe()
-      subscriptionData?.subscription?.unsubscribe()
+      subscriptionData?.subscription?.unsubscribe?.()
     }
   }, [])
 
-  async function signUpOrSignIn(email: string) {
-    // magic link
-    const { error } = await supabase.auth.signInWithOtp({ email })
-    if (error) console.error(error)
-    else alert('已發送登入連結到你的信箱（magic link）')
-  }
-
-  async function signOut() {
-    await supabase.auth.signOut()
-    setUser(null)
-  }
-
-  async function fetchPosts() {
-    const { data, error } = await supabase
+  // fetchPosts using a supabase client instance
+  async function fetchPosts(client?: SupabaseClient) {
+    const sb = client ?? supabase
+    if (!sb) return
+    const { data, error } = await sb
       .from('posts')
       .select('id, content, created_at, user_id')
       .order('created_at', { ascending: false })
@@ -60,9 +55,23 @@ export default function HomePage() {
     else setPosts((data as Post[]) || [])
   }
 
+  async function signUpOrSignIn(email: string) {
+    if (!supabase) return alert('Supabase client not ready')
+    const { error } = await supabase.auth.signInWithOtp({ email })
+    if (error) console.error(error)
+    else alert('已發送登入連結到你的信箱（magic link）')
+  }
+
+  async function signOut() {
+    if (!supabase) return
+    await supabase.auth.signOut()
+    setUser(null)
+  }
+
   async function createPost(e: FormEvent) {
     e.preventDefault()
     if (!user) return alert('請先登入')
+    if (!supabase) return alert('Supabase client not ready')
     const { error } = await supabase.from('posts').insert({ content, user_id: user.id })
     if (error) console.error(error)
     else {
