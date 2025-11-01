@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           backgroundAttachment: 'fixed',              // 捲動時固定
           backgroundPosition: 'center',               // 置中
         }}>
-        <div className="fixed inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60" />
+        <div className="fixed inset-0 bg-black/40 pointer-events-none z-0" />
         <div className="relative z-10"></div>
         
         <FadeIn className="fade-left">

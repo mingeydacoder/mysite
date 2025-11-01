@@ -237,9 +237,20 @@ export default function HomePage() {
   return (
     <div className="container py+10">
       <FadeIn delay={200}>
-      <h1 className="text-4xl font-extrabold font-mono tracking-tight text-indigo-700 mb-4">
-        Intro Page
-      </h1>
+      <div className="relative inline-block">
+        {/* 筆刷圖 */}
+        <img
+          src="/brush.png"
+          alt="brush"
+          className="pointer-events-none absolute -z-10 left-2 -top-4 w-48 sm:w-64 opacity-80 
+                    transform filter blur-sm mix-blend-multiply scale-x-140 rotate-[-5deg]"
+          style={{ filter: 'blur(0.6px)' }}
+        />
+
+        <h1 className="text-4xl font-extrabold font-mono tracking-tight text-black mb-4">
+          Intro Page
+        </h1>
+      </div>
 
       {/* ---------- 靜態網站主自我介紹（所有人可見） ---------- */}
       
@@ -493,15 +504,6 @@ export default function HomePage() {
                   ChatGPT
                 </button>
 
-                {user?.email === 'you@example.com' && (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => window.location.href = '/admin'}
-                  >
-                    後台管理
-                  </button>
-                )}
               </div>
             </div>
           </aside>
@@ -518,7 +520,6 @@ export default function HomePage() {
                 <h2 className="text-xl font-bold text-gray-900">{selectedAnn.title}</h2>
                 <div className="text-sm text-gray-500 mt-1">{selectedAnn.date}</div>
               </div>
-              <button className="btn btn-ghost" onClick={() => setSelectedAnn(null)}>關閉</button>
             </div>
 
             <div

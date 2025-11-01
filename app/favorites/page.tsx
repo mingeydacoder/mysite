@@ -139,9 +139,10 @@ export default function FavoritesPage() {
   }
 
   return (
+    <div className="relative z-20">
     <div className="container py-10">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">我的收藏</h1>
+        <h1 className="text-2xl font-semibold text-white">我的收藏</h1>
         <Link href="/" className="btn btn-ghost">回到首頁</Link>
       </div>
 
@@ -202,6 +203,7 @@ export default function FavoritesPage() {
           ))}
         </div>
       )}
+    </div>
     </div>
   )
 }
