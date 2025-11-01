@@ -46,7 +46,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         <footer className="mt-12">
           <div className="container py-6 text-center text-sm text-muted">
-            © {new Date().getFullYear()} YenLun Chen. All rights reserved.
+            © {new Date().getFullYear()} Allen Chen. All rights reserved.
           </div>
         </footer>
 
