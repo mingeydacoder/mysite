@@ -25,6 +25,14 @@ export default function FavoritesPage() {
 
     useEffect(() => {
     const client = createBrowserSupabaseClient()
+    // 如果 createBrowserSupabaseClient 可能回傳 null，要在這裡處理掉
+    if (!client) {
+        console.error('Supabase client not initialized')
+        setSb(null)
+        setLoading(false)
+        return
+    }
+
     setSb(client)
 
     client.auth.getSession().then(({ data }) => {
@@ -46,6 +54,7 @@ export default function FavoritesPage() {
 
     return () => sub?.subscription?.unsubscribe?.()
     }, [])
+
 
 
   async function fetchFavorites(supabase: SupabaseClient, uid: string) {
