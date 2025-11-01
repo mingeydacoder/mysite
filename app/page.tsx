@@ -13,11 +13,22 @@ interface Post {
   profiles?: { display_name?: string }
 }
 
+interface Profile {
+  display_name?: string
+}
+
+const SITE_OWNER = {
+  name: 'HI! This is a website created by Allen Chen',
+  // 建議放 public 底下的圖片路徑或外部 URL
+  avatar: '/site-owner-avatar.png',
+  bio: 'from National Taiwan University.'
+}
+
 export default function HomePage() {
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
   const [user, setUser] = useState<any>(null)
   const [posts, setPosts] = useState<Post[]>([])
-  const [profile, setProfile] = useState<{ display_name?: string } | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [nameInput, setNameInput] = useState('')
   const [isSavingName, setIsSavingName] = useState(false)
   const [isPosting, setIsPosting] = useState(false)
@@ -54,7 +65,6 @@ export default function HomePage() {
   }, [])
 
   // ---------- Auth ----------
-
   async function signUp() {
     if (!supabase) return
     setIsAuthLoading(true)
@@ -178,94 +188,118 @@ export default function HomePage() {
   }
 
   // ---------- UI ----------
+  const defaultAvatar = SITE_OWNER.avatar || '/default-avatar.png' // 可改
+
   return (
     <div className="container py-10">
-      <h1 className="text-2xl font-semibold mb-6">我的小站</h1>
+      <h1 className="text-3xl font-extrabold font-mono tracking-tight text-indigo-700 mb-4">
+        Intro Page
+      </h1>
 
-      {!user ? (
-        <div className="card max-w-md space-y-4">
-          <div className="flex gap-2 mb-3">
-            <button
-              className={`btn ${view === 'sign-in' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setView('sign-in')}
-            >
-              登入
-            </button>
-            <button
-              className={`btn ${view === 'sign-up' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setView('sign-up')}
-            >
-              註冊
-            </button>
+      {/* ---------- 靜態網站主自我介紹（所有人可見） ---------- */}
+      <div className="card mb-6">
+        <div className="flex items-start gap-4">
+          <div style={{ minWidth: 96 }}>
+            <img
+              src={defaultAvatar}
+              alt="site owner avatar"
+              style={{ width: 105, height: 105, objectFit: 'cover', borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }}
+            />
           </div>
+          <div className="flex-1">
+            <div className="text-lg font-semibold">{SITE_OWNER.name}</div>
+            <div className="kv text-sm mt-1">{SITE_OWNER.bio}</div>
+          </div>
+        </div>
+      </div>
 
-          {view === 'sign-in' ? (
-            <form onSubmit={(e) => { e.preventDefault(); signIn() }} className="space-y-3">
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                placeholder="Email"
-                className="input"
-                required
-              />
-              <input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type="password"
-                placeholder="Password"
-                className="input"
-                required
-              />
-              <button type="submit" className="btn btn-primary w-full" disabled={isAuthLoading}>
-                {isAuthLoading ? '登入中...' : '登入'}
+      {/* ---------- 原本內容（登入 / 註冊 / 發文 / 貼文 / 側欄） ---------- */}
+      {!user ? (
+        <div className="flex justify-center items-center min-h-[40vh]">
+          <div className="card max-w-md space-y-4">
+            <div className="flex gap-2 mb-3">
+              <button
+                className={`btn ${view === 'sign-in' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setView('sign-in')}
+              >
+                登入
               </button>
+              <button
+                className={`btn ${view === 'sign-up' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setView('sign-up')}
+              >
+                註冊
+              </button>
+            </div>
 
-              <div className="pt-2 text-sm">
-                <label className="kv">忘記密碼？</label>
-                <div className="flex gap-2 mt-2">
-                  <input
-                    value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
-                    type="email"
-                    placeholder="you@example.com"
-                    className="input"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={sendResetPasswordEmail}
-                    disabled={isForgotSending}
-                  >
-                    {isForgotSending ? '發送中...' : '發送重設信'}
-                  </button>
+            {view === 'sign-in' ? (
+              <form onSubmit={(e) => { e.preventDefault(); signIn() }} className="space-y-3">
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  placeholder="Email"
+                  className="input"
+                  required
+                />
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  placeholder="Password"
+                  className="input"
+                  required
+                />
+                <button type="submit" className="btn btn-primary w-full" disabled={isAuthLoading}>
+                  {isAuthLoading ? '登入中...' : '登入'}
+                </button>
+
+                <div className="pt-2 text-sm">
+                  <label className="kv">忘記密碼？</label>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      type="email"
+                      placeholder="you@example.com"
+                      className="input"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={sendResetPasswordEmail}
+                      disabled={isForgotSending}
+                    >
+                      {isForgotSending ? '發送中...' : 'Reset'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={(e) => { e.preventDefault(); signUp() }} className="space-y-3">
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                placeholder="Email"
-                className="input"
-                required
-              />
-              <input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type="password"
-                placeholder="Password (min 6)"
-                className="input"
-                minLength={6}
-                required
-              />
-              <button type="submit" className="btn btn-primary w-full" disabled={isAuthLoading}>
-                {isAuthLoading ? '註冊中...' : '註冊'}
-              </button>
-            </form>
-          )}
+              </form>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); signUp() }} className="space-y-3">
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  placeholder="Email"
+                  className="input"
+                  required
+                />
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  placeholder="Password (min 6)"
+                  className="input"
+                  minLength={6}
+                  required
+                />
+                <button type="submit" className="btn btn-primary w-full" disabled={isAuthLoading}>
+                  {isAuthLoading ? '註冊中...' : '註冊'}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

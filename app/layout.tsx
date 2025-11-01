@@ -1,5 +1,7 @@
 // app/layout.tsx
 import './globals.css'
+import ContactHover from '../components/ContactHover' // 路徑依你專案調整
+
 import type { ReactNode } from 'react'
 
 export const metadata = {
@@ -11,12 +13,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-TW">
       <body>
+        <div className="container py-10">
+          {/* 把元件放在最外層（fixed 絕對定位於視窗右上） */}
+          <ContactHover />
+
+          {/* 你的其他內容 */}
+          <h1 className="text-3xl font-bold text-black mb-6">Intro Page</h1>
+          ...
+        </div>
         <header className="bg-white border-b">
           <div className="container flex items-center justify-between h-16">
-            <a className="text-lg font-semibold text-primary" href="/">Mingey's Website</a>
+            <a className="text-lg font-semibold text-primary" href="/">🤗 Mingey's Website 🤗</a>
             <nav className="flex items-center gap-3">
-              <a className="text-sm text-muted hover:text-gray-900" href="#">About</a>
-              <a className="text-sm text-muted hover:text-gray-900" href="#">Contact</a>
             </nav>
           </div>
         </header>
