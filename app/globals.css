@@ -1,26 +1,143 @@
 @import "tailwindcss";
 
+/* ---------- CSS 變數 (自行管理顏色/間距) ---------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --text: #0f172a;
+  --border: #e6e9ee;
+  --radius: 0.5rem;
+  --shadow-sm: 0 1px 2px rgba(2,6,23,0.06);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* 全域基礎 */
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* helper colors as classes (不依賴 tailwind.config) */
+.text-primary { color: var(--primary) !important; }
+.bg-primary { background-color: var(--primary) !important; }
+.text-muted { color: var(--muted) !important; }
+
+/* ---------- 常用元件樣式（取代 @apply bg-primary 等） ---------- */
+
+/* 按鈕基底 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color .15s ease, transform .05s ease, box-shadow .12s ease;
+  box-shadow: var(--shadow-sm);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* 主要按鈕 */
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(79, 70, 229, 0.3);
+  transition: all 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+}
+
+
+/* 次要/空心按鈕 */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+}
+
+/* 輸入 / textarea 基底 */
+.input, textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  outline: none;
+  font-size: 0.95rem;
+  background: white;
+  color: var(--text);
+}
+.input:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
+  border-color: var(--primary);
+}
+
+/* 卡片 */
+.card {
+  background: var(--card);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+  border: 1px solid rgba(2,6,23,0.03);
+}
+
+/* 小元件輔助 */
+.kv {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* 調整列表、貼文樣式 */
+.post-item {
+  padding: 0.9rem;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  border: 1px solid #f1f5f9;
+}
+.post-item .meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+/* container utility 可以覆蓋 Tailwind 的 container 行為 */
+.container {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* footer small */
+.footer-note {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
