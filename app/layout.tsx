@@ -3,7 +3,7 @@ import './globals.css'
 import type { ReactNode } from 'react'
 
 export const metadata = {
-  title: '我的小站',
+  title: "Mingey's Website",
   description: 'Next.js + Supabase 個人小站',
 }
 
@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <header className="bg-white border-b">
           <div className="container flex items-center justify-between h-16">
-            <a className="text-lg font-semibold text-primary" href="/">MySite</a>
+            <a className="text-lg font-semibold text-primary" href="/">Mingey's Website</a>
             <nav className="flex items-center gap-3">
               <a className="text-sm text-muted hover:text-gray-900" href="#">About</a>
               <a className="text-sm text-muted hover:text-gray-900" href="#">Contact</a>
