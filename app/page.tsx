@@ -5,6 +5,8 @@ import { useEffect, useState, FormEvent } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createBrowserSupabaseClient } from '../lib/supabaseClient'
 import FadeIn from '../components/FadeIn'
+import WeatherNow from '../components/weathernow'
+
 
 
 
@@ -62,8 +64,7 @@ export default function HomePage() {
       id: 'a1',
       title: '2026加州自由行',
       summary: '懶人包網頁已上線，內含行程規劃與注意事項',
-      content: `
-        <a href="https://allenchen0121s-private-organizat.gitbook.io/2026_california_trip"
+      content: `<a href="https://allenchen0121s-private-organizat.gitbook.io/2026_california_trip"
           target="_blank" rel="noopener noreferrer" class="text-indigo-600">網頁請點此
         </a>
       `,
@@ -71,13 +72,6 @@ export default function HomePage() {
     },
     {
       id: 'a2',
-      title: '活動：週末線上聚會',
-      summary: '本週六 20:00 舉辦線上聚會，歡迎加入討論與問答。',
-      content: '地點：Discord #general 頻道。主題：新功能分享與 Q&A。歡迎帶問題來！',
-      date: '2025-10-28',
-    },
-    {
-      id: 'a3',
       title: '公告：新功能上線',
       summary: '已上線：收藏功能、個人化顯示名稱與留言系統優化。',
       content: '我們針對留言系統做了優化，提升載入效能與 UX。若遇到任何問題，請回報。',
@@ -268,6 +262,12 @@ export default function HomePage() {
             <div className="text-3xl font-semibold mt-3">{SITE_OWNER.name}</div>
             <div className="kv text-sm mt-3">{SITE_OWNER.bio}</div>
           </div>
+            <div className="flex items-start gap-4">
+              {/* avatar + main content */}
+              {/* 動態天氣元件（自動以 "Columbia, SC" 查詢） */}
+              <WeatherNow location="Columbia, SC" />
+            </div>
+
         </div>
       </div>
 
