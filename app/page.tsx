@@ -265,7 +265,7 @@ export default function HomePage() {
             />
           </div>
           <div className="flex-1">
-            <div className="text-3xl font-semibold">{SITE_OWNER.name}</div>
+            <div className="text-3xl font-semibold mt-3">{SITE_OWNER.name}</div>
             <div className="kv text-sm mt-3">{SITE_OWNER.bio}</div>
           </div>
         </div>
@@ -372,7 +372,7 @@ export default function HomePage() {
               {/* 外框標題 */}
               <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <div className="text-lg font-semibold">最新公告</div>
+                  <div className="text-lg font-semibold">佈告欄</div>
                   <div className="kv text-sm text-gray-500">點擊查看完整內容</div>
                 </div>
                 <div className="text-xs text-gray-400">{announcements.length} 則</div>
@@ -392,7 +392,7 @@ export default function HomePage() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <div className="kv font-bold text-gray-600 mt-1 line-clamp-2">{a.title}</div>
+                          <div className="font-bold text-black-400 mt-1 line-clamp-2">{a.title}</div>
                           <div className="kv text-sm text-gray-600 mt-1 line-clamp-2">{a.summary}</div>
                         </div>
                         <div className="text-xs text-gray-400 ml-3">{a.date}</div>
