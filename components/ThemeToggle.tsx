@@ -19,15 +19,18 @@ export default function ThemeToggle() {
     onClick={toggleTheme}
     aria-label="切換主題"
     className="
-        fixed bottom-6 right-6 z-50
-        p-3 rounded-full
-        backdrop-blur-md
-        bg-white/70 dark:bg-gray-800/70
-        border border-gray-300 dark:border-gray-700
-        shadow-lg hover:shadow-xl
-        hover:scale-105 transform-gpu
-        transition-all duration-7000 ease-in-out   /* ← 這行關鍵 */
+    fixed bottom-6 right-6 z-50
+    p-3 rounded-full
+    backdrop-blur-md
+    bg-white/70 dark:bg-gray-800/70
+    border border-gray-300 dark:border-gray-700
+    shadow-lg hover:shadow-2xl
+    hover:scale-102 /* 小幅度放大，不會把游標移出 */
+    transform-gpu
+    transition-shadow transition-transform duration-300 ease-in-out
     "
+    style={{ transformOrigin: 'center' }}
+
     >
     {theme === 'light' ? '🌙' : '☀️'}
     </button>

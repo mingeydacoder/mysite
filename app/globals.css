@@ -109,7 +109,6 @@ html, body {
   background-color: rgba(255,255,255,0.02);
   border-color: rgba(73, 16, 67, 0.12);
   box-shadow: 0 4px 10px rgba(73, 16, 67, 0.08);
-  transform: translateY(-2px);
 }
 
 .btn-ghost:active {
