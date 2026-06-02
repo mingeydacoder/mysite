@@ -8,14 +8,17 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 export function createBrowserSupabaseClient(): SupabaseClient | null {
   if (typeof window === 'undefined') return null
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!url || !anon) {
+  if (!rawUrl || !anon) {
     // 只輸出 warn，避免 build 因為未定義 env 而中斷（我們會在部署時補上 env）
-    console.warn('Supabase env not found in browser:', { url, anon })
+    console.warn('Supabase env not found in browser:', { url: rawUrl, anon })
     return null
   }
+
+  const parsedUrl = new URL(rawUrl)
+  const url = `${parsedUrl.protocol}//${parsedUrl.host}`
 
   return createClient(url, anon)
 }
