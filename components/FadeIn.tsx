@@ -1,23 +1,16 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 
 type Props = {
   children: React.ReactNode
   className?: string
   delay?: number // ms, 0 / 75 / 150 / 225 / ...
-  once?: boolean // 只在 mount 時播放一次 (default true)
+  once?: boolean // 保留相容既有呼叫
   style?: React.CSSProperties
 }
 
-export default function FadeIn({ children, className = '', delay = 0, once = true, style }: Props) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    // 只在 client mount 時觸發動畫
-    setMounted(true)
-  }, [])
-
+export default function FadeIn({ children, className = '', delay = 0, style }: Props) {
   // map delay (ms) to our helper classes - fallback to inline style delay if not match
   const delayClassMap: Record<number, string> = {
     0: 'fade-delay-0',
@@ -31,8 +24,7 @@ export default function FadeIn({ children, className = '', delay = 0, once = tru
 
   const delayClass = delayClassMap[delay] ?? ''
 
-  // combine classes: 當 mounted 為 true 時加入 .fade-up（觸發動畫）
-  const combinedClass = `${mounted ? 'fade-up' : ''} ${delayClass} ${className}`.trim()
+  const combinedClass = `fade-up ${delayClass} ${className}`.trim()
 
   // 若 delay 非內建，使用 inline style 的 animationDelay
   const extraStyle = delayClass ? style : { ...(style ?? {}), animationDelay: `${delay}ms` }

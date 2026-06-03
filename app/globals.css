@@ -14,6 +14,10 @@
   --shadow-sm: 0 1px 2px rgba(2,6,23,0.06);
 }
 
+* {
+  box-sizing: border-box;
+}
+
 /* ---------- dark mode 變數覆寫（當 html 帶 .dark 時） ---------- */
 html.dark {
   --bg: #0b1220;
@@ -28,7 +32,7 @@ html.dark {
 
 /* ---------- 全域基礎 ---------- */
 html, body {
-  height: 100%;
+  min-height: 100%;
   background: transparent;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -38,14 +42,31 @@ html, body {
   padding: 0;
 }
 
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+.site-bg {
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+}
+
+a {
+  overflow-wrap: anywhere;
+}
+
 /* container 基本設定（改用變數與 tailwind 互補） */
 .container {
   background: transparent;
   max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: clamp(1rem, 4vw, 1.5rem);
+  padding-right: clamp(1rem, 4vw, 1.5rem);
 }
 
 /* helper colors as classes (改為用變數，移除 !important) */
@@ -61,7 +82,8 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
   border-radius: var(--radius);
   font-weight: 600;
   line-height: 1;
@@ -69,6 +91,9 @@ html, body {
   border: 1px solid transparent;
   transition: background-color .15s ease, transform .05s ease, box-shadow .12s ease;
   box-shadow: var(--shadow-sm);
+  text-align: center;
+  white-space: nowrap;
+  touch-action: manipulation;
 }
 
 /* 主要按鈕 */
@@ -119,11 +144,12 @@ html, body {
 /* 輸入 / textarea 基底（以變數為基底） */
 .input, textarea {
   width: 100%;
-  padding: 0.5rem;
+  min-height: 44px;
+  padding: 0.7rem 0.8rem;
   border: 1px solid var(--border);
   border-radius: 0.375rem;
   outline: none;
-  font-size: 0.95rem;
+  font-size: 1rem;
   background: var(--card);
   color: var(--text);
 }
@@ -136,7 +162,7 @@ html, body {
 .card {
   background: var(--card);
   border-radius: 0.75rem;
-  padding: 1.25rem;
+  padding: clamp(1rem, 3vw, 1.25rem);
   box-shadow: 0 6px 18px rgba(15,23,42,0.04);
   border: 1px solid rgba(2,6,23,0.03);
 }
@@ -153,6 +179,7 @@ html, body {
   background: var(--card);
   border-radius: 0.5rem;
   border: 1px solid rgba(241,245,249,0.6);
+  overflow-wrap: anywhere;
 }
 .post-item .meta {
   font-size: 0.85rem;
@@ -203,9 +230,14 @@ html, body {
   opacity: 0;
   transform: translateY(10px);
   animation-name: fadeUp;
-  animation-duration: 3000ms;
+  animation-duration: 450ms;
   animation-timing-function: cubic-bezier(.2,.8,.2,1);
   animation-fill-mode: forwards;
+}
+
+.contact-float {
+  top: var(--contact-top);
+  right: var(--contact-right);
 }
 
 /* fade delay helpers */
@@ -254,4 +286,31 @@ html, body {
 /* 讓主題切換時，全站背景與文字顏色柔和過渡 */
 html, body, .card, .btn, .input, textarea {
   transition: background-color 0.8s ease, color 0.8s ease, border-color 0.8s ease;
+}
+
+@media (max-width: 640px) {
+  .site-bg {
+    background-attachment: scroll;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .contact-float .btn {
+    width: auto;
+  }
+
+  .contact-float {
+    top: auto;
+    right: auto;
+    bottom: 1rem;
+    left: 1rem;
+  }
+
+  .contact-float [role="dialog"] {
+    right: auto !important;
+    left: 0;
+    max-width: calc(100vw - 2rem);
+  }
 }

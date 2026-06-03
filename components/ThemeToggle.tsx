@@ -25,7 +25,7 @@ export default function ThemeToggle() {
     bg-white/70 dark:bg-gray-800/70
     border border-gray-300 dark:border-gray-700
     shadow-lg hover:shadow-2xl
-    hover:scale-102 /* 小幅度放大，不會把游標移出 */
+    hover:scale-[1.02]
     transform-gpu
     transition-shadow transition-transform duration-300 ease-in-out
     "

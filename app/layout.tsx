@@ -1,8 +1,8 @@
 // app/layout.tsx
 import './globals.css'
+import Link from 'next/link'
 import ContactHover from '../components/ContactHover' // 路徑依你專案調整
 import FadeIn from '../components/FadeIn'
-import { Sun, Moon } from 'lucide-react'  // ✅ 圖示建議使用 lucide-react
 import ThemeToggle from '../components/ThemeToggle'
 
 
@@ -20,14 +20,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-TW" suppressHydrationWarning>
-      <body
-          style={{
-          backgroundImage: "url('/background.jpg')",  // 👈 這裡換圖片路徑
-          backgroundSize: 'cover',                    // 圖片填滿畫面
-          backgroundRepeat: 'no-repeat',              // 不重複
-          backgroundAttachment: 'fixed',              // 捲動時固定
-          backgroundPosition: 'center',               // 置中
-        }}>
+      <body className="site-bg">
         <ThemeToggle />
         
         <div className="fixed inset-0 bg-black/40 pointer-events-none z-0" />
@@ -35,8 +28,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         
         <FadeIn className="fade-left">
                   <header className="dynamic-bg border-b text-white">
-          <div className="container flex items-center justify-between h-16">
-            <a className="text-lg font-semibold text-black" href="/">🤗 Mingey's Website 🤗</a>
+          <div className="container flex min-h-16 items-center justify-between py-3">
+            <Link className="text-base sm:text-lg font-semibold text-black" href="/">Mingey&apos;s Website</Link>
             <nav className="flex items-center gap-3"></nav>
           </div>
         </header>
@@ -47,10 +40,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         <div className="container py-5">
           {/* 把元件放在最外層（fixed 絕對定位於視窗右上） */}
-          <ContactHover />
+          <ContactHover top={80} />
         </div>
 
-        <main className="container py-10">{children}</main>
+        <main className="container py-6 sm:py-10">{children}</main>
 
         <footer className="mt-12">
           <div className="container py-6 text-center text-sm text-muted">

@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import type { CSSProperties } from 'react'
 
 interface Props {
   content?: React.ReactNode
@@ -30,7 +31,10 @@ export default function ContactHover({ content, top = 16, right = 16 }: Props) {
 
   return (
     // container is fixed in viewport top-right
-    <div style={{ top: top, right: right }} className="fixed z-50">
+    <div
+      style={{ '--contact-top': `${top}px`, '--contact-right': `${right}px` } as CSSProperties & Record<string, string>}
+      className="contact-float fixed z-50"
+    >
       <div
         onMouseEnter={show}
         onMouseLeave={hide}
@@ -42,6 +46,7 @@ export default function ContactHover({ content, top = 16, right = 16 }: Props) {
         <button
           aria-haspopup="dialog"
           aria-expanded={open}
+          onClick={() => setOpen(value => !value)}
           className="btn btn-ghost px-3 py-2 rounded-md shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
         >
           ☎️ Contact 

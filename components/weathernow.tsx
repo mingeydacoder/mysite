@@ -6,7 +6,6 @@ type WeatherState = {
   description: string
   highF?: number
   lowF?: number
-  raw?: any
 }
 
 export default function WeatherNow({ location = 'Columbia, SC' }: { location?: string }) {
@@ -29,7 +28,6 @@ export default function WeatherNow({ location = 'Columbia, SC' }: { location?: s
           description: curr?.weatherDesc?.[0]?.value ?? '',
           highF: today?.maxtempF ? parseInt(today.maxtempF, 10) : undefined,
           lowF: today?.mintempF ? parseInt(today.mintempF, 10) : undefined,
-          raw: data,
         })
       })
       .catch(err => {
@@ -41,7 +39,7 @@ export default function WeatherNow({ location = 'Columbia, SC' }: { location?: s
 
   if (loading) {
     return (
-      <div className="w-36 ml-4 flex-shrink-0">
+      <div className="w-full sm:w-40 sm:flex-shrink-0">
         <div className="card p-3 text-center">
           <div className="text-sm text-muted">Loading…</div>
         </div>
@@ -51,7 +49,7 @@ export default function WeatherNow({ location = 'Columbia, SC' }: { location?: s
 
   if (!weather) {
     return (
-      <div className="w-36 ml-4 flex-shrink-0">
+      <div className="w-full sm:w-40 sm:flex-shrink-0">
         <div className="card p-3 text-center">
           <div className="text-sm text-muted">No data</div>
         </div>
@@ -60,7 +58,7 @@ export default function WeatherNow({ location = 'Columbia, SC' }: { location?: s
   }
 
   return (
-    <div className="w-45 ml-4 flex-shrink-0 ">
+    <div className="w-full sm:w-44 sm:flex-shrink-0">
       <div className="card p-3 text-center ">
         <div className="text-xs text-muted">
   Now · <span className="text-xs text-muted">Columbia, SC</span>

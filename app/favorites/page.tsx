@@ -125,10 +125,10 @@ export default function FavoritesPage() {
 
   if (!userId) {
     return (
-      <div className="container py-10">
-        <div className="flex items-center justify-between mb-6">
+      <div className="space-y-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-semibold">我的收藏</h1>
-          <Link href="/" className="btn btn-ghost">回到首頁</Link>
+          <Link href="/" className="btn btn-ghost sm:w-auto">回到首頁</Link>
         </div>
         <div className="card">
           <p>請先登入以使用收藏功能。</p>
@@ -140,20 +140,20 @@ export default function FavoritesPage() {
 
   return (
     <div className="relative z-20">
-    <div className="container py-10">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold text-white">我的收藏</h1>
-        <Link href="/" className="btn btn-ghost">回到首頁</Link>
+        <Link href="/" className="btn btn-ghost sm:w-auto">回到首頁</Link>
       </div>
 
     <div className="card mb-6">
     <form onSubmit={handleAdd}>
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] md:items-center">
         {/* 標題輸入框（主要欄位，較寬） */}
         <input
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            className="input flex-[0_7_0%] min-w-[180px]"
+            className="input"
             placeholder="收藏標題（必填）"
             required
         />
@@ -162,13 +162,13 @@ export default function FavoritesPage() {
         <input
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
-            className="input flex-[1_1_0%] min-w-[150px]"
+            className="input"
             placeholder="網址（可選）"
         />
 
         {/* 新增按鈕 */}
         <button
-            type="submit"
+          type="submit"
             className="btn btn-primary px-5"
             disabled={adding}
         >
@@ -186,18 +186,18 @@ export default function FavoritesPage() {
       ) : (
         <div className="space-y-3">
           {favorites.map(f => (
-            <div key={f.id} className="card flex items-center justify-between">
-              <div>
+            <div key={f.id} className="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <div className="font-medium">{f.title}</div>
                 {f.url && (
-                  <a href={f.url} target="_blank" rel="noopener" className="kv">
+                  <a href={f.url} target="_blank" rel="noopener" className="kv block break-all">
                     {f.url}
                   </a>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="kv text-sm">{f.created_at ? new Date(f.created_at).toLocaleString() : ''}</div>
-                <button className="btn btn-ghost" onClick={() => handleDelete(f.id)}>刪除</button>
+                <button className="btn btn-ghost sm:w-auto" onClick={() => handleDelete(f.id)}>刪除</button>
               </div>
             </div>
           ))}

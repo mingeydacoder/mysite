@@ -1,8 +1,8 @@
 // app/page.tsx
 'use client'
 
-import { useEffect, useState, FormEvent } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { useCallback, useEffect, useMemo, useState, FormEvent } from 'react'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createBrowserSupabaseClient } from '../lib/supabaseClient'
 import FadeIn from '../components/FadeIn'
 import WeatherNow from '../components/weathernow'
@@ -39,8 +39,8 @@ const SITE_OWNER = {
 
 
 export default function HomePage() {
-  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const supabase = useMemo(() => createBrowserSupabaseClient(), [])
+  const [user, setUser] = useState<User | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [nameInput, setNameInput] = useState('')
@@ -79,20 +79,58 @@ export default function HomePage() {
     },
   ]
 
-  useEffect(() => {
-    const sb = createBrowserSupabaseClient()
-    if (!sb) return
-    setSupabase(sb)
+  // ---------- Fetch posts & profiles ----------
+  const fetchProfileAndPosts = useCallback(async (sb: SupabaseClient, uid: string) => {
+    const { data: postsData, error: postsErr } = await sb
+      .from('posts')
+      .select('id, content, created_at, user_id')
+      .order('created_at', { ascending: false })
 
-    sb.auth.getSession().then(({ data }) => {
+    if (postsErr) {
+      console.error('fetch posts error', postsErr)
+      setPosts([])
+      return
+    }
+
+    const postsList = (postsData as Post[]) || []
+    const userIds = Array.from(new Set(postsList.map(p => p.user_id).filter(Boolean)))
+
+    if (userIds.length === 0) {
+      setPosts(postsList)
+    } else {
+      const { data: profilesData } = await sb
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds)
+
+      const profiles = (profilesData ?? []) as { user_id: string; display_name?: string }[]
+      const nameById = new Map<string, string | undefined>()
+      for (const pr of profiles) nameById.set(pr.user_id, pr.display_name)
+
+      const postsWithProfiles = postsList.map(p => ({
+        ...p,
+        profiles: { display_name: nameById.get(p.user_id) ?? undefined },
+      }))
+      setPosts(postsWithProfiles)
+    }
+
+    const { data: myProfile } = await sb.from('profiles').select('display_name').eq('user_id', uid).maybeSingle()
+    setProfile(myProfile ?? null)
+    if (myProfile?.display_name) setNameInput(myProfile.display_name)
+  }, [])
+
+  useEffect(() => {
+    if (!supabase) return
+
+    supabase.auth.getSession().then(({ data }) => {
       const uid = data.session?.user?.id
       setUser(data.session?.user ?? null)
-      if (uid) fetchProfileAndPosts(sb, uid)
+      if (uid) fetchProfileAndPosts(supabase, uid)
     }).catch(console.error)
 
-    const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null)
-      if (session?.user?.id) fetchProfileAndPosts(sb, session.user.id)
+      if (session?.user?.id) fetchProfileAndPosts(supabase, session.user.id)
       else {
         setProfile(null)
         setPosts([])
@@ -100,7 +138,7 @@ export default function HomePage() {
     })
 
     return () => sub?.subscription?.unsubscribe?.()
-  }, [])
+  }, [fetchProfileAndPosts, supabase])
 
   // ---------- Auth ----------
   async function signUp() {
@@ -147,46 +185,6 @@ export default function HomePage() {
     setPosts([])
   }
 
-  // ---------- Fetch posts & profiles ----------
-  async function fetchProfileAndPosts(sb: SupabaseClient, uid: string) {
-    const { data: postsData, error: postsErr } = await sb
-      .from('posts')
-      .select('id, content, created_at, user_id')
-      .order('created_at', { ascending: false })
-
-    if (postsErr) {
-      console.error('fetch posts error', postsErr)
-      setPosts([])
-      return
-    }
-
-    const postsList = (postsData as Post[]) || []
-    const userIds = Array.from(new Set(postsList.map(p => p.user_id).filter(Boolean)))
-
-    if (userIds.length === 0) {
-      setPosts(postsList)
-    } else {
-      const { data: profilesData } = await sb
-        .from('profiles')
-        .select('user_id, display_name')
-        .in('user_id', userIds)
-
-      const profiles = (profilesData ?? []) as { user_id: string; display_name?: string }[]
-      const nameById = new Map<string, string | undefined>()
-      for (const pr of profiles) nameById.set(pr.user_id, pr.display_name)
-
-      const postsWithProfiles = postsList.map(p => ({
-        ...p,
-        profiles: { display_name: nameById.get(p.user_id) ?? undefined },
-      }))
-      setPosts(postsWithProfiles)
-    }
-
-    const { data: myProfile } = await sb.from('profiles').select('display_name').eq('user_id', uid).maybeSingle()
-    setProfile(myProfile ?? null)
-    if (myProfile?.display_name) setNameInput(myProfile.display_name)
-  }
-
   // ---------- Profile ----------
   async function saveDisplayName(e?: FormEvent) {
     if (e) e.preventDefault()
@@ -229,9 +227,9 @@ export default function HomePage() {
   const defaultAvatar = SITE_OWNER.avatar || '/default-avatar.png' // 可改
 
   return (
-    <div className="container py+10">
+    <div className="space-y-6 sm:space-y-8">
       <FadeIn delay={200}>
-      <div className="relative inline-block">
+      <div className="relative inline-block max-w-full">
         {/* 筆刷圖 */}
         <img
           src="/brush.png"
@@ -241,7 +239,7 @@ export default function HomePage() {
           style={{ filter: 'blur(0.6px)' }}
         />
 
-        <h1 className="text-4xl font-extrabold font-mono tracking-tight text-black mb-4">
+        <h1 className="text-3xl sm:text-4xl font-extrabold font-mono tracking-tight text-black mb-4">
           Intro Page
         </h1>
       </div>
@@ -249,20 +247,21 @@ export default function HomePage() {
       {/* ---------- 靜態網站主自我介紹（所有人可見） ---------- */}
       
 
-        <div className="card mb-6">
-        <div className="flex items-start gap-4">
-          <div style={{ minWidth: 96 }}>
+        <div className="card">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="shrink-0">
             <img
               src={defaultAvatar}
               alt="site owner avatar"
-              style={{ width: 105, height: 105, objectFit: 'cover', borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }}
+              className="h-24 w-24 sm:h-[105px] sm:w-[105px]"
+              style={{ objectFit: 'cover', borderRadius: 12, border: '1px solid rgba(0,0,0,0.06)' }}
             />
           </div>
           <div className="flex-1">
-            <div className="text-3xl font-semibold mt-3">{SITE_OWNER.name}</div>
+            <div className="text-2xl sm:text-3xl font-semibold sm:mt-3">{SITE_OWNER.name}</div>
             <div className="kv text-sm mt-3">{SITE_OWNER.bio}</div>
           </div>
-            <div className="flex items-start gap-4">
+            <div className="w-full sm:w-auto">
               {/* avatar + main content */}
               {/* 動態天氣元件（自動以 "Columbia, SC" 查詢） */}
               <WeatherNow location="Columbia, SC" />
@@ -277,11 +276,11 @@ export default function HomePage() {
       <FadeIn delay={300}>
       {!user ? (
         /* 未登入：登入卡 + 公告外框（多個公告）並排（mobile 會堆疊） */
-        <div className="flex flex-col md:flex-row items-stretch gap-6 justify-center">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
           {/* 登入卡（左） */}
-          <div className="w-full md:w-auto flex flex justify-center">
-            <div className="card w-full max-w-md space-y-4">
-              <div className="flex gap-2 mb-3">
+          <div className="w-full">
+            <div className="card w-full space-y-4">
+              <div className="grid grid-cols-2 gap-2 mb-3">
                 <button
                   className={`btn ${view === 'sign-in' ? 'btn-primary' : 'btn-ghost'}`}
                   onClick={() => setView('sign-in')}
@@ -318,9 +317,9 @@ export default function HomePage() {
                     {isAuthLoading ? '登入中...' : '登入'}
                   </button>
 
-                  <div className="pt-40 text-sm">
+                  <div className="pt-3 text-sm">
                     <label className="kv">忘記密碼？</label>
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex flex-col gap-2 mt-2 sm:flex-row">
                       <input
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
@@ -330,7 +329,7 @@ export default function HomePage() {
                       />
                       <button
                         type="button"
-                        className="btn btn-ghost"
+                        className="btn btn-ghost sm:w-auto"
                         onClick={sendResetPasswordEmail}
                         disabled={isForgotSending}
                       >
@@ -367,8 +366,8 @@ export default function HomePage() {
           </div>
 
           {/* 公告外框（右）：寬高與登入卡一致，內部有多個小公告卡 */}
-          <div className="w-full md:w-auto flex flex justify-center">
-            <div className="card w-full max-w-md p-0 flex flex-col">
+          <div className="w-full">
+            <div className="card w-full p-0 flex flex-col overflow-hidden">
               {/* 外框標題 */}
               <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
@@ -390,12 +389,12 @@ export default function HomePage() {
                       onClick={() => setSelectedAnn(a)}
                       onKeyDown={(e) => { if (e.key === 'Enter') setSelectedAnn(a) }}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                         <div className="flex-1">
                           <div className="font-bold text-black-400 mt-1 line-clamp-2">{a.title}</div>
                           <div className="kv text-sm text-gray-600 mt-1 line-clamp-2">{a.summary}</div>
                         </div>
-                        <div className="text-xs text-gray-400 ml-3">{a.date}</div>
+                        <div className="text-xs text-gray-400 sm:ml-3">{a.date}</div>
                       </div>
                     </div>
                   ))}
@@ -414,12 +413,12 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <section className="md:col-span-2 space-y-6">
             <div className="card">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
                   <div className="kv">已登入</div>
-                  <div className="font-medium">{profile?.display_name ?? user.email}</div>
+                  <div className="font-medium break-all">{profile?.display_name ?? user.email}</div>
                 </div>
-                <button className="btn btn-ghost" onClick={signOut}>
+                <button className="btn btn-ghost sm:w-auto" onClick={signOut}>
                   登出
                 </button>
               </div>
@@ -434,7 +433,7 @@ export default function HomePage() {
                     className="input"
                     placeholder="輸入你的名稱"
                   />
-                  <button type="submit" className="btn btn-primary" disabled={isSavingName}>
+                  <button type="submit" className="btn btn-primary w-full sm:w-auto" disabled={isSavingName}>
                     {isSavingName ? '儲存中...' : '儲存名稱'}
                   </button>
                 </form>
@@ -467,7 +466,7 @@ export default function HomePage() {
                       <div className="font-medium">
                         {p.profiles?.display_name ?? '匿名'}
                       </div>
-                      <div className="mt-2">{p.content}</div>
+                      <div className="mt-2 whitespace-pre-wrap break-words">{p.content}</div>
                     </li>
                   ))}
                 </ul>
@@ -479,7 +478,7 @@ export default function HomePage() {
           <aside className="md:col-span-1 space-y-4">
             <div className="card">
               <h3 className="text-lg font-medium mb-3">快速連結</h3>
-              <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-1">
                 <button
                   type="button"
                   className="btn btn-ghost"
@@ -514,7 +513,7 @@ export default function HomePage() {
       {selectedAnn && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedAnn(null)} />
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-[min(96%,900px)] z-60 p-6 relative">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-[calc(100%-2rem)] sm:w-[min(96%,900px)] z-[60] p-4 sm:p-6 relative max-h-[85vh] overflow-y-auto">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <h2 className="text-xl font-bold text-gray-900">{selectedAnn.title}</h2>
