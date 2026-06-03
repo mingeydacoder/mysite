@@ -61,6 +61,20 @@ export default function HomePage() {
   // sample announcements (site-wide). 可改成從 DB 讀取
   const announcements: Announcement[] = [
     {
+      id: 'a3',
+      title: '網站更新：手機版介面與後端恢復',
+      summary: '已完成新版 Supabase 串接，並優化手機與桌面瀏覽體驗。',
+      content: `本次更新完成以下調整：
+
+1. 重新串接新的 Supabase project，恢復註冊、登入、留言與收藏功能。
+2. 建立新版資料庫 schema，包含 profiles、posts、favorites。
+3. 優化手機版首頁排版，登入區、佈告欄、自我介紹與天氣卡在小螢幕上更順暢。
+4. 調整收藏頁表單與列表，長網址和長文字不會撐破畫面。
+5. 改善按鈕與輸入框的觸控高度，手機操作更直覺。
+6. 縮短頁面淡入動畫，整體載入感更俐落。`,
+      date: '2026-06-03',
+    },
+    {
       id: 'a1',
       title: '2026加州自由行',
       summary: '懶人包網頁已上線，內含行程規劃與注意事項',
