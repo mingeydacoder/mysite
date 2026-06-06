@@ -140,6 +140,44 @@ function PostsSkeleton() {
   )
 }
 
+function AnnouncementBoard({ announcements, onSelect }: {
+  announcements: Announcement[]
+  onSelect: (announcement: Announcement) => void
+}) {
+  return (
+    <div className="card w-full p-0 flex flex-col overflow-hidden">
+      <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+        <div>
+          <div className="text-lg font-semibold">佈告欄</div>
+          <div className="kv text-sm">點擊查看完整內容</div>
+        </div>
+        <div className="kv text-xs">{announcements.length} 則</div>
+      </div>
+
+      <div className="p-3 overflow-y-auto" style={{ maxHeight: 480 }}>
+        <div className="space-y-3">
+          {announcements.map((announcement) => (
+            <button
+              key={announcement.id}
+              type="button"
+              className="panel-item block w-full p-3 cursor-pointer text-left"
+              onClick={() => onSelect(announcement)}
+            >
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                <div className="flex-1">
+                  <div className="font-bold mt-1 line-clamp-2">{announcement.title}</div>
+                  <div className="kv text-sm mt-1 line-clamp-2">{announcement.summary}</div>
+                </div>
+                <div className="kv text-xs sm:ml-3">{announcement.date}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 
 export default function HomePage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), [])
@@ -157,6 +195,7 @@ export default function HomePage() {
   const [avatarZoom, setAvatarZoom] = useState(1)
   const [avatarCropPixels, setAvatarCropPixels] = useState<Area | null>(null)
   const [isPosting, setIsPosting] = useState(false)
+  const [communityTab, setCommunityTab] = useState<'posts' | 'announcements'>('posts')
 
   // auth form state
   const [view, setView] = useState<'sign-in' | 'sign-up'>('sign-in')
@@ -595,45 +634,7 @@ export default function HomePage() {
 
           {/* 公告外框（右）：寬高與登入卡一致，內部有多個小公告卡 */}
           <div className="w-full">
-            <div className="card w-full p-0 flex flex-col overflow-hidden">
-              {/* 外框標題 */}
-              <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-                <div>
-                  <div className="text-lg font-semibold">佈告欄</div>
-                  <div className="kv text-sm">點擊查看完整內容</div>
-                </div>
-                <div className="kv text-xs">{announcements.length} 則</div>
-              </div>
-
-              {/* 公告列表（若過長則滾動） */}
-              <div className="p-3 overflow-y-auto" style={{ maxHeight: 360 }}>
-                <div className="space-y-3">
-                  {announcements.map((a) => (
-                    <div
-                      key={a.id}
-                      className="panel-item p-3 cursor-pointer"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelectedAnn(a)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') setSelectedAnn(a) }}
-                    >
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                        <div className="flex-1">
-                          <div className="font-bold mt-1 line-clamp-2">{a.title}</div>
-                          <div className="kv text-sm mt-1 line-clamp-2">{a.summary}</div>
-                        </div>
-                        <div className="kv text-xs sm:ml-3">{a.date}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* 外框底部（選用） */}
-              <div className="p-3 border-t border-[var(--border)] text-sm text-muted">
-                <div></div>
-              </div>
-            </div>
+            <AnnouncementBoard announcements={announcements} onSelect={setSelectedAnn} />
           </div>
         </div>
       ) : (
@@ -689,45 +690,73 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="card">
-              <form onSubmit={createPost}>
-                <textarea name="content" className="input mb-3" rows={4} placeholder="寫點什麼..." />
+            <div className="card p-2">
+              <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="社群內容">
                 <button
-                  type="submit"
-                  className="btn btn-primary w-full"
-                  disabled={isPosting}
+                  type="button"
+                  role="tab"
+                  aria-selected={communityTab === 'posts'}
+                  className={`btn ${communityTab === 'posts' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setCommunityTab('posts')}
                 >
-                  {isPosting ? '發佈中...' : '發佈'}
+                  貼文
                 </button>
-              </form>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={communityTab === 'announcements'}
+                  className={`btn ${communityTab === 'announcements' ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setCommunityTab('announcements')}
+                >
+                  公告
+                </button>
+              </div>
             </div>
 
+            {communityTab === 'posts' ? (
+              <>
+                <div className="card">
+                  <form onSubmit={createPost}>
+                    <textarea name="content" className="input mb-3" rows={4} placeholder="寫點什麼..." />
+                    <button
+                      type="submit"
+                      className="btn btn-primary w-full"
+                      disabled={isPosting}
+                    >
+                      {isPosting ? '發佈中...' : '發佈'}
+                    </button>
+                  </form>
+                </div>
 
-            <div id="posts" className="card section-anchor">
-              <h2 className="text-lg font-semibold mb-4">貼文</h2>
-              {isPostsLoading ? (
-                <PostsSkeleton />
-              ) : posts.length === 0 ? (
-                <p className="kv">目前沒有貼文</p>
-              ) : (
-                <ul className="space-y-4">
-                  {posts.map((p) => (
-                    <li key={p.id} className="post-item">
-                      <div className="flex items-center gap-3">
-                        <UserAvatar profile={p.profiles} fallbackName="匿名" size="sm" />
-                        <div className="min-w-0">
-                          <div className="font-medium truncate">
-                            {p.profiles?.display_name ?? '匿名'}
+                <div id="posts" className="card section-anchor">
+                  <h2 className="text-lg font-semibold mb-4">貼文</h2>
+                  {isPostsLoading ? (
+                    <PostsSkeleton />
+                  ) : posts.length === 0 ? (
+                    <p className="kv">目前沒有貼文</p>
+                  ) : (
+                    <ul className="space-y-4">
+                      {posts.map((p) => (
+                        <li key={p.id} className="post-item">
+                          <div className="flex items-center gap-3">
+                            <UserAvatar profile={p.profiles} fallbackName="匿名" size="sm" />
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">
+                                {p.profiles?.display_name ?? '匿名'}
+                              </div>
+                              <div className="meta mb-0">{new Date(p.created_at).toLocaleString()}</div>
+                            </div>
                           </div>
-                          <div className="meta mb-0">{new Date(p.created_at).toLocaleString()}</div>
-                        </div>
-                      </div>
-                      <div className="mt-2 whitespace-pre-wrap break-words">{p.content}</div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                          <div className="mt-2 whitespace-pre-wrap break-words">{p.content}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </>
+            ) : (
+              <AnnouncementBoard announcements={announcements} onSelect={setSelectedAnn} />
+            )}
           </section>
 
           {/* 側欄 */}
