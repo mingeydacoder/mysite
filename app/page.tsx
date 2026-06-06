@@ -504,9 +504,9 @@ export default function HomePage() {
                 <button
                   type="button"
                   className="btn btn-ghost"
-                  onClick={() => window.open('https://hazuhaxi.github.io/personal_website/', '_blank', 'noopener')}
+                  onClick={() => window.open('https://tw.stock.yahoo.com', '_blank', 'noopener')}
                 >
-                  個人網頁
+                  Yahoo Stock
                 </button>
 
                 <button
