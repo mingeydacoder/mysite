@@ -357,6 +357,27 @@ a {
   right: var(--contact-right);
 }
 
+.contact-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 60;
+  width: max-content;
+  min-width: 250px;
+  max-width: calc(100vw - 2rem);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-0.25rem) scale(0.98);
+  transform-origin: top right;
+  transition: opacity .15s ease, transform .15s ease;
+}
+
+.contact-popover-open {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
 /* fade delay helpers */
 .fade-delay-0 { animation-delay: 0ms; }
 .fade-delay-75 { animation-delay: 75ms; }
@@ -425,9 +446,19 @@ html, body, .card, .panel-item, .modal-panel, .btn, .input, textarea {
     left: 1rem;
   }
 
-  .contact-float [role="dialog"] {
-    right: auto !important;
+  .contact-popover {
+    top: auto;
+    right: auto;
+    bottom: calc(100% + 0.5rem);
     left: 0;
+    width: max-content;
+    min-width: min(250px, calc(100vw - 2rem));
     max-width: calc(100vw - 2rem);
+    transform: translateY(0.25rem) scale(0.98);
+    transform-origin: bottom left;
+  }
+
+  .contact-popover-open {
+    transform: translateY(0) scale(1);
   }
 }

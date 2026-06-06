@@ -58,18 +58,9 @@ export default function ContactHover({ content, top = 16, right = 16 }: Props) {
           onMouseLeave={hide}
           role="dialog"
           aria-hidden={!open}
-          className={`pointer-events-none transform transition-all duration-150 ease-out origin-top-right ${
-            open ? 'opacity-100 translate-y-1 pointer-events-auto' : 'opacity-0 -translate-y-1'
-          }`}
-          style={{
-            position: 'absolute',
-            right: 0,
-            marginTop: 8,
-            minWidth: 250,
-            zIndex: 60,
-          }}
+          className={`contact-popover ${open ? 'contact-popover-open' : ''}`}
         >
-          <div className="modal-panel w-auto min-w-[250px] overflow-visible p-4 text-sm">
+          <div className="modal-panel w-auto min-w-0 overflow-visible p-4 text-sm">
             {/* 內容（可自訂） */}
             <div>
               {content ?? (
