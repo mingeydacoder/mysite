@@ -463,7 +463,7 @@ export default function HomePage() {
           style={{ filter: 'blur(0.6px)' }}
         />
 
-        <h1 className="text-primary text-3xl sm:text-4xl font-extrabold font-mono tracking-tight mb-4">
+        <h1 className="text-black text-3xl sm:text-4xl font-extrabold font-mono tracking-tight mb-4">
           Intro Page
         </h1>
       </div>
