@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useState, FormEvent } from 'react'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import Cropper, { type Area } from 'react-easy-crop'
+import { FaFacebookF, FaGithub, FaInstagram } from 'react-icons/fa'
 import { createBrowserSupabaseClient } from '../lib/supabaseClient'
 import FadeIn from '../components/FadeIn'
 import WeatherNow from '../components/weathernow'
@@ -38,6 +39,12 @@ const SITE_OWNER = {
   avatar: '/site-owner-avatar.png',
   bio: '注意：一般用戶無需註冊帳號'
 }
+
+const SOCIAL_LINKS = [
+  { name: 'Instagram', href: 'https://www.instagram.com/', icon: FaInstagram, className: 'social-instagram' },
+  { name: 'Facebook', href: 'https://www.facebook.com/', icon: FaFacebookF, className: 'social-facebook' },
+  { name: 'GitHub', href: 'https://github.com/mingeydacoder', icon: FaGithub, className: 'social-github' },
+]
 
 function cropImage(imageSrc: string, crop: Area): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -795,6 +802,27 @@ export default function HomePage() {
       )}
       </section>
       </FadeIn>
+
+      <FadeIn delay={375}>
+        <section className="flex justify-center pt-4" aria-label="社群連結">
+          <div className="social-links">
+            {SOCIAL_LINKS.map(({ name, href, icon: Icon, className }) => (
+              <a
+                key={name}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={name}
+                title={name}
+                className={`social-drop ${className}`}
+              >
+                <Icon aria-hidden />
+              </a>
+            ))}
+          </div>
+        </section>
+      </FadeIn>
+
       {/* Avatar Crop Modal */}
       {avatarSource && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
