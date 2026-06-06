@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useState, FormEvent } from 'react'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
+import Cropper, { type Area } from 'react-easy-crop'
 import { createBrowserSupabaseClient } from '../lib/supabaseClient'
 import FadeIn from '../components/FadeIn'
 import WeatherNow from '../components/weathernow'
@@ -36,6 +37,41 @@ const SITE_OWNER = {
   // 建議放 public 底下的圖片路徑或外部 URL
   avatar: '/site-owner-avatar.png',
   bio: '注意：一般用戶無需註冊帳號'
+}
+
+function cropImage(imageSrc: string, crop: Area): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => {
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')
+      if (!context) {
+        reject(new Error('無法建立圖片裁切畫布'))
+        return
+      }
+
+      canvas.width = 512
+      canvas.height = 512
+      context.drawImage(
+        image,
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      )
+      canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(new Error('無法產生裁切圖片')),
+        'image/webp',
+        0.9,
+      )
+    }
+    image.onerror = () => reject(new Error('無法讀取圖片'))
+    image.src = imageSrc
+  })
 }
 
 function UserAvatar({ profile, fallbackName, size = 'md' }: {
@@ -79,6 +115,10 @@ export default function HomePage() {
   const [nameInput, setNameInput] = useState('')
   const [isSavingName, setIsSavingName] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [avatarSource, setAvatarSource] = useState<string | null>(null)
+  const [avatarCrop, setAvatarCrop] = useState({ x: 0, y: 0 })
+  const [avatarZoom, setAvatarZoom] = useState(1)
+  const [avatarCropPixels, setAvatarCropPixels] = useState<Area | null>(null)
   const [isPosting, setIsPosting] = useState(false)
 
   // auth form state
@@ -256,19 +296,48 @@ export default function HomePage() {
     }
   }
 
-  async function uploadAvatar(file: File) {
-    if (!supabase || !user) return alert('請先登入')
+  function closeAvatarCropper() {
+    if (avatarSource) URL.revokeObjectURL(avatarSource)
+    setAvatarSource(null)
+    setAvatarCrop({ x: 0, y: 0 })
+    setAvatarZoom(1)
+    setAvatarCropPixels(null)
+  }
 
+  function selectAvatar(file: File) {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) return alert('頭像僅支援 JPG、PNG 或 WebP')
     if (file.size > 5 * 1024 * 1024) return alert('頭像大小不可超過 5 MB')
 
+    if (avatarSource) URL.revokeObjectURL(avatarSource)
+    setAvatarSource(URL.createObjectURL(file))
+    setAvatarCrop({ x: 0, y: 0 })
+    setAvatarZoom(1)
+    setAvatarCropPixels(null)
+  }
+
+  async function uploadAvatar() {
+    if (!supabase || !user) return alert('請先登入')
+    if (!avatarSource || !avatarCropPixels) return alert('請先選擇裁切範圍')
+
     setIsUploadingAvatar(true)
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const filePath = `${user.id}/avatar-${Date.now()}.${extension}`
+    let croppedAvatar: Blob
+    try {
+      croppedAvatar = await cropImage(avatarSource, avatarCropPixels)
+    } catch (error) {
+      setIsUploadingAvatar(false)
+      alert(error instanceof Error ? error.message : '頭像裁切失敗')
+      return
+    }
+
+    const filePath = `${user.id}/avatar-${Date.now()}.webp`
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, file, { cacheControl: '3600', upsert: false })
+      .upload(filePath, croppedAvatar, {
+        cacheControl: '3600',
+        contentType: 'image/webp',
+        upsert: false,
+      })
 
     if (uploadError) {
       setIsUploadingAvatar(false)
@@ -296,6 +365,7 @@ export default function HomePage() {
 
     setProfile(current => ({ ...current, display_name: displayName, avatar_url: publicUrlData.publicUrl }))
     setNameInput(displayName)
+    closeAvatarCropper()
     await fetchProfileAndPosts(supabase, user.id)
   }
 
@@ -530,7 +600,7 @@ export default function HomePage() {
                     disabled={isUploadingAvatar}
                     onChange={(e) => {
                       const file = e.target.files?.[0]
-                      if (file) uploadAvatar(file)
+                      if (file) selectAvatar(file)
                       e.target.value = ''
                     }}
                   />
@@ -629,6 +699,52 @@ export default function HomePage() {
         </div>
       )}
       </FadeIn>
+      {/* Avatar Crop Modal */}
+      {avatarSource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={isUploadingAvatar ? undefined : closeAvatarCropper} />
+          <div className="bg-white rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-lg z-[60] p-4 sm:p-6 relative">
+            <h2 className="text-xl font-bold text-gray-900">裁切頭像</h2>
+            <p className="mt-1 text-sm text-gray-500">拖曳圖片調整位置，使用滑桿縮放。</p>
+
+            <div className="relative mt-4 h-72 overflow-hidden rounded-lg bg-gray-950">
+              <Cropper
+                image={avatarSource}
+                crop={avatarCrop}
+                zoom={avatarZoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setAvatarCrop}
+                onZoomChange={setAvatarZoom}
+                onCropComplete={(_area, croppedAreaPixels) => setAvatarCropPixels(croppedAreaPixels)}
+              />
+            </div>
+
+            <label className="mt-4 block text-sm font-medium text-gray-700">
+              縮放
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={avatarZoom}
+                onChange={(e) => setAvatarZoom(Number(e.target.value))}
+                className="mt-2 w-full accent-indigo-600"
+              />
+            </label>
+
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button type="button" className="btn btn-ghost sm:w-auto" onClick={closeAvatarCropper} disabled={isUploadingAvatar}>
+                取消
+              </button>
+              <button type="button" className="btn btn-primary sm:w-auto" onClick={uploadAvatar} disabled={isUploadingAvatar || !avatarCropPixels}>
+                {isUploadingAvatar ? '處理並上傳中...' : '確認裁切並上傳'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Announcement Modal */}
       {selectedAnn && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
