@@ -1,8 +1,7 @@
 // app/layout.tsx
 import './globals.css'
 import Link from 'next/link'
-import ContactHover from '../components/ContactHover' // 路徑依你專案調整
-import FadeIn from '../components/FadeIn'
+import ContactHover from '../components/ContactHover'
 import ThemeToggle from '../components/ThemeToggle'
 
 
@@ -22,24 +21,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="zh-TW" suppressHydrationWarning>
       <body className="site-bg">
         <ThemeToggle />
-        
+
         <div className="fixed inset-0 bg-black/40 pointer-events-none z-0" />
-        <div className="relative z-10"></div>
-        
-        <FadeIn className="fade-left">
-                  <header className="dynamic-bg border-b text-white">
-          <div className="container flex min-h-16 items-center justify-between py-3">
-            <Link className="text-base sm:text-lg font-semibold text-black" href="/">Mingey&apos;s Website</Link>
-            <nav className="flex items-center gap-3"></nav>
+
+        <header className="site-header dynamic-bg">
+          <div className="container flex min-h-16 flex-col justify-center gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <Link className="site-brand" href="/">Mingey&apos;s Website</Link>
+            <nav className="site-nav" aria-label="主要導覽">
+              <Link href="/#about">關於</Link>
+              <Link href="/#community">社群</Link>
+              <Link href="/#community">貼文</Link>
+              <Link href="/favorites">收藏</Link>
+            </nav>
           </div>
         </header>
 
-        </FadeIn>
-
-
-
         <div className="container py-5">
-          {/* 把元件放在最外層（fixed 絕對定位於視窗右上） */}
           <ContactHover top={80} />
         </div>
 
@@ -51,9 +48,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
         </footer>
 
-        
       </body>
-      
     </html>
   )
 }

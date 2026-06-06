@@ -91,7 +91,7 @@ function UserAvatar({ profile, fallbackName, size = 'md' }: {
       <img
         src={profile.avatar_url}
         alt={`${profile.display_name || fallbackName || '使用者'}的頭像`}
-        className={`${sizeClass} shrink-0 rounded-full border border-gray-200 object-cover`}
+        className={`${sizeClass} shrink-0 rounded-full border border-[var(--border)] object-cover`}
       />
     )
   }
@@ -106,6 +106,40 @@ function UserAvatar({ profile, fallbackName, size = 'md' }: {
   )
 }
 
+function HomeSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2" aria-label="內容載入中" aria-busy="true">
+      {[0, 1].map(item => (
+        <div key={item} className="card space-y-4">
+          <div className="skeleton h-6 w-32" />
+          <div className="skeleton h-11 w-full" />
+          <div className="skeleton h-11 w-full" />
+          <div className="skeleton h-11 w-28" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PostsSkeleton() {
+  return (
+    <div className="space-y-4" aria-label="貼文載入中" aria-busy="true">
+      {[0, 1, 2].map(item => (
+        <div key={item} className="post-item space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="skeleton h-10 w-10 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <div className="skeleton h-4 w-28" />
+              <div className="skeleton h-3 w-40" />
+            </div>
+          </div>
+          <div className="skeleton h-4 w-full" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 
 export default function HomePage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), [])
@@ -115,7 +149,10 @@ export default function HomePage() {
   const [nameInput, setNameInput] = useState('')
   const [isSavingName, setIsSavingName] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [isSessionLoading, setIsSessionLoading] = useState(true)
+  const [isPostsLoading, setIsPostsLoading] = useState(false)
   const [avatarSource, setAvatarSource] = useState<string | null>(null)
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
   const [avatarCrop, setAvatarCrop] = useState({ x: 0, y: 0 })
   const [avatarZoom, setAvatarZoom] = useState(1)
   const [avatarCropPixels, setAvatarCropPixels] = useState<Area | null>(null)
@@ -169,6 +206,7 @@ export default function HomePage() {
 
   // ---------- Fetch posts & profiles ----------
   const fetchProfileAndPosts = useCallback(async (sb: SupabaseClient, uid: string) => {
+    setIsPostsLoading(true)
     const { data: postsData, error: postsErr } = await sb
       .from('posts')
       .select('id, content, created_at, user_id')
@@ -177,6 +215,7 @@ export default function HomePage() {
     if (postsErr) {
       console.error('fetch posts error', postsErr)
       setPosts([])
+      setIsPostsLoading(false)
       return
     }
 
@@ -208,6 +247,7 @@ export default function HomePage() {
     const { data: myProfile } = await sb.from('profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
     setProfile(myProfile ?? null)
     if (myProfile?.display_name) setNameInput(myProfile.display_name)
+    setIsPostsLoading(false)
   }, [])
 
   useEffect(() => {
@@ -217,10 +257,11 @@ export default function HomePage() {
       const uid = data.session?.user?.id
       setUser(data.session?.user ?? null)
       if (uid) fetchProfileAndPosts(supabase, uid)
-    }).catch(console.error)
+    }).catch(console.error).finally(() => setIsSessionLoading(false))
 
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null)
+      setIsSessionLoading(false)
       if (session?.user?.id) fetchProfileAndPosts(supabase, session.user.id)
       else {
         setProfile(null)
@@ -298,10 +339,28 @@ export default function HomePage() {
 
   function closeAvatarCropper() {
     if (avatarSource) URL.revokeObjectURL(avatarSource)
+    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl)
     setAvatarSource(null)
+    setAvatarPreviewUrl(null)
     setAvatarCrop({ x: 0, y: 0 })
     setAvatarZoom(1)
     setAvatarCropPixels(null)
+  }
+
+  async function updateAvatarPreview(croppedAreaPixels: Area) {
+    setAvatarCropPixels(croppedAreaPixels)
+    if (!avatarSource) return
+
+    try {
+      const previewBlob = await cropImage(avatarSource, croppedAreaPixels)
+      const nextPreviewUrl = URL.createObjectURL(previewBlob)
+      setAvatarPreviewUrl(current => {
+        if (current) URL.revokeObjectURL(current)
+        return nextPreviewUrl
+      })
+    } catch (error) {
+      console.error('avatar preview error', error)
+    }
   }
 
   function selectAvatar(file: File) {
@@ -392,7 +451,8 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <FadeIn delay={200}>
+      <FadeIn delay={200} className="section-anchor" style={{ scrollMarginTop: '7rem' }}>
+      <section id="about">
       <div className="relative inline-block max-w-full">
         {/* 筆刷圖 */}
         <img
@@ -403,7 +463,7 @@ export default function HomePage() {
           style={{ filter: 'blur(0.6px)' }}
         />
 
-        <h1 className="text-3xl sm:text-4xl font-extrabold font-mono tracking-tight text-black mb-4">
+        <h1 className="text-primary text-3xl sm:text-4xl font-extrabold font-mono tracking-tight mb-4">
           Intro Page
         </h1>
       </div>
@@ -433,12 +493,16 @@ export default function HomePage() {
 
         </div>
       </div>
+      </section>
 
       </FadeIn>
 
 
-      <FadeIn delay={300}>
-      {!user ? (
+      <FadeIn delay={300} className="section-anchor">
+      <section id="community">
+      {isSessionLoading ? (
+        <HomeSkeleton />
+      ) : !user ? (
         /* 未登入：登入卡 + 公告外框（多個公告）並排（mobile 會堆疊） */
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
           {/* 登入卡（左） */}
@@ -533,12 +597,12 @@ export default function HomePage() {
           <div className="w-full">
             <div className="card w-full p-0 flex flex-col overflow-hidden">
               {/* 外框標題 */}
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
                 <div>
                   <div className="text-lg font-semibold">佈告欄</div>
-                  <div className="kv text-sm text-gray-500">點擊查看完整內容</div>
+                  <div className="kv text-sm">點擊查看完整內容</div>
                 </div>
-                <div className="text-xs text-gray-400">{announcements.length} 則</div>
+                <div className="kv text-xs">{announcements.length} 則</div>
               </div>
 
               {/* 公告列表（若過長則滾動） */}
@@ -547,7 +611,7 @@ export default function HomePage() {
                   {announcements.map((a) => (
                     <div
                       key={a.id}
-                      className="border rounded-md p-3 hover:bg-gray-50 cursor-pointer"
+                      className="panel-item p-3 cursor-pointer"
                       role="button"
                       tabIndex={0}
                       onClick={() => setSelectedAnn(a)}
@@ -555,10 +619,10 @@ export default function HomePage() {
                     >
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                         <div className="flex-1">
-                          <div className="font-bold text-black-400 mt-1 line-clamp-2">{a.title}</div>
-                          <div className="kv text-sm text-gray-600 mt-1 line-clamp-2">{a.summary}</div>
+                          <div className="font-bold mt-1 line-clamp-2">{a.title}</div>
+                          <div className="kv text-sm mt-1 line-clamp-2">{a.summary}</div>
                         </div>
-                        <div className="text-xs text-gray-400 sm:ml-3">{a.date}</div>
+                        <div className="kv text-xs sm:ml-3">{a.date}</div>
                       </div>
                     </div>
                   ))}
@@ -566,7 +630,7 @@ export default function HomePage() {
               </div>
 
               {/* 外框底部（選用） */}
-              <div className="p-3 border-t border-gray-100 text-sm text-gray-500">
+              <div className="p-3 border-t border-[var(--border)] text-sm text-muted">
                 <div></div>
               </div>
             </div>
@@ -639,9 +703,11 @@ export default function HomePage() {
             </div>
 
 
-            <div className="card">
+            <div id="posts" className="card section-anchor">
               <h2 className="text-lg font-semibold mb-4">貼文</h2>
-              {posts.length === 0 ? (
+              {isPostsLoading ? (
+                <PostsSkeleton />
+              ) : posts.length === 0 ? (
                 <p className="kv">目前沒有貼文</p>
               ) : (
                 <ul className="space-y-4">
@@ -698,30 +764,41 @@ export default function HomePage() {
           </aside>
         </div>
       )}
+      </section>
       </FadeIn>
       {/* Avatar Crop Modal */}
       {avatarSource && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60" onClick={isUploadingAvatar ? undefined : closeAvatarCropper} />
-          <div className="bg-white rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-lg z-[60] p-4 sm:p-6 relative">
-            <h2 className="text-xl font-bold text-gray-900">裁切頭像</h2>
-            <p className="mt-1 text-sm text-gray-500">拖曳圖片調整位置，使用滑桿縮放。</p>
+          <div className="modal-backdrop" onClick={isUploadingAvatar ? undefined : closeAvatarCropper} />
+          <div className="modal-panel max-w-2xl p-4 sm:p-6">
+            <h2 className="text-xl font-bold">裁切頭像</h2>
+            <p className="kv mt-1 text-sm">拖曳圖片調整位置，使用滑桿縮放。</p>
 
-            <div className="relative mt-4 h-72 overflow-hidden rounded-lg bg-gray-950">
-              <Cropper
-                image={avatarSource}
-                crop={avatarCrop}
-                zoom={avatarZoom}
-                aspect={1}
-                cropShape="round"
-                showGrid={false}
-                onCropChange={setAvatarCrop}
-                onZoomChange={setAvatarZoom}
-                onCropComplete={(_area, croppedAreaPixels) => setAvatarCropPixels(croppedAreaPixels)}
-              />
+            <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-center">
+              <div className="relative h-72 overflow-hidden rounded-lg bg-gray-950">
+                <Cropper
+                  image={avatarSource}
+                  crop={avatarCrop}
+                  zoom={avatarZoom}
+                  aspect={1}
+                  cropShape="round"
+                  showGrid={false}
+                  onCropChange={setAvatarCrop}
+                  onZoomChange={setAvatarZoom}
+                  onCropComplete={(_area, croppedAreaPixels) => updateAvatarPreview(croppedAreaPixels)}
+                />
+              </div>
+              <div className="text-center">
+                <div className="kv mb-2">裁切後預覽</div>
+                {avatarPreviewUrl ? (
+                  <img src={avatarPreviewUrl} alt="裁切後頭像預覽" className="mx-auto h-32 w-32 rounded-full border border-[var(--border)] object-cover" />
+                ) : (
+                  <div className="skeleton mx-auto h-32 w-32 rounded-full" />
+                )}
+              </div>
             </div>
 
-            <label className="mt-4 block text-sm font-medium text-gray-700">
+            <label className="form-label mt-4">
               縮放
               <input
                 type="range"
@@ -748,17 +825,17 @@ export default function HomePage() {
       {/* Announcement Modal */}
       {selectedAnn && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedAnn(null)} />
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-[calc(100%-2rem)] sm:w-[min(96%,900px)] z-[60] p-4 sm:p-6 relative max-h-[85vh] overflow-y-auto">
+          <div className="modal-backdrop" onClick={() => setSelectedAnn(null)} />
+          <div className="modal-panel max-w-2xl p-4 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900">{selectedAnn.title}</h2>
-                <div className="text-sm text-gray-500 mt-1">{selectedAnn.date}</div>
+                <h2 className="text-xl font-bold">{selectedAnn.title}</h2>
+                <div className="kv text-sm mt-1">{selectedAnn.date}</div>
               </div>
             </div>
 
             <div
-            className="mt-4 text-gray-700 whitespace-pre-wrap"
+            className="mt-4 whitespace-pre-wrap"
             dangerouslySetInnerHTML={{ __html: selectedAnn.content || '' }}
           />
 

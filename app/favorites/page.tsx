@@ -15,6 +15,22 @@ interface Favorite {
   created_at?: string | null
 }
 
+function FavoritesSkeleton() {
+  return (
+    <div className="space-y-3" aria-label="收藏載入中" aria-busy="true">
+      {[0, 1, 2].map(item => (
+        <div key={item} className="card flex items-center gap-4">
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-5 w-40" />
+            <div className="skeleton h-4 w-3/4" />
+          </div>
+          <div className="skeleton h-11 w-20" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function FavoritesPage() {
   const [sb, setSb] = useState<SupabaseClient | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -123,6 +139,18 @@ export default function FavoritesPage() {
     }
   }
 
+  if (loading && !userId) {
+    return (
+      <div className="space-y-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="skeleton h-8 w-32" />
+          <div className="skeleton h-11 w-28" />
+        </div>
+        <FavoritesSkeleton />
+      </div>
+    )
+  }
+
   if (!userId) {
     return (
       <div className="space-y-5">
@@ -142,7 +170,7 @@ export default function FavoritesPage() {
     <div className="relative z-20">
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold text-white">我的收藏</h1>
+        <h1 className="text-2xl font-semibold">我的收藏</h1>
         <Link href="/" className="btn btn-ghost sm:w-auto">回到首頁</Link>
       </div>
 
@@ -180,7 +208,7 @@ export default function FavoritesPage() {
 
 
       {loading ? (
-        <div className="card">載入中…</div>
+        <FavoritesSkeleton />
       ) : favorites.length === 0 ? (
         <div className="card">目前沒有收藏（可使用上方表單新增）</div>
       ) : (

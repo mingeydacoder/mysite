@@ -10,6 +10,8 @@
   --primary-hover: #4338ca;
   --text: #0f172a;
   --border: #e6e9ee;
+  --surface-hover: #f8fafc;
+  --overlay: rgba(15, 23, 42, 0.58);
   --radius: 0.5rem;
   --shadow-sm: 0 1px 2px rgba(2,6,23,0.06);
 }
@@ -27,6 +29,8 @@ html.dark {
   --primary-hover: #c7d2fe;
   --text: #e6eefc;
   --border: rgba(255,255,255,0.06);
+  --surface-hover: #182235;
+  --overlay: rgba(2, 6, 23, 0.76);
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.45);
 }
 
@@ -45,6 +49,11 @@ html, body {
 body {
   min-width: 320px;
   overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 7rem;
 }
 
 .site-bg {
@@ -74,6 +83,53 @@ a {
 .bg-primary { background-color: var(--primary); }
 .text-muted { color: var(--muted); }
 
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(14px);
+}
+
+.site-brand {
+  color: #111827;
+  font-size: 1.05rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.site-nav {
+  display: flex;
+  max-width: 100%;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.site-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.site-nav a {
+  color: #1f2937;
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+  white-space: nowrap;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.site-nav a:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: #312e81;
+}
+
+.section-anchor {
+  scroll-margin-top: 7rem;
+}
+
 /* ---------- 按鈕 / 元件（保留你原本的風格，但改用變數） ---------- */
 
 /* 按鈕基底 */
@@ -94,6 +150,12 @@ a {
   text-align: center;
   white-space: nowrap;
   touch-action: manipulation;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
 }
 
 /* 主要按鈕 */
@@ -124,15 +186,15 @@ a {
 /* 次要/空心按鈕 */
 .btn-ghost {
   background-color: var(--card);
-  border: 1px solid rgba(73, 16, 67, 0.06);
+  border: 1px solid var(--border);
   box-shadow: 0 1px 3px rgba(73, 16, 67, 0.03);
   color: var(--text);
   transition: all 0.25s ease;
 }
 
 .btn-ghost:hover {
-  background-color: rgba(255,255,255,0.02);
-  border-color: rgba(73, 16, 67, 0.12);
+  background-color: var(--surface-hover);
+  border-color: var(--primary-hover);
   box-shadow: 0 4px 10px rgba(73, 16, 67, 0.08);
 }
 
@@ -153,6 +215,19 @@ a {
   background: var(--card);
   color: var(--text);
 }
+
+.input::placeholder, textarea::placeholder {
+  color: var(--muted);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 .input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
   border-color: var(--primary-hover);
@@ -164,7 +239,38 @@ a {
   border-radius: 0.75rem;
   padding: clamp(1rem, 3vw, 1.25rem);
   box-shadow: 0 6px 18px rgba(15,23,42,0.04);
-  border: 1px solid rgba(2,6,23,0.03);
+  border: 1px solid var(--border);
+}
+
+.panel-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  transition: background-color .15s ease, border-color .15s ease;
+}
+
+.panel-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary-hover);
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay);
+}
+
+.modal-panel {
+  position: relative;
+  z-index: 60;
+  width: calc(100% - 2rem);
+  max-height: 85vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.32);
 }
 
 /* 小元件輔助 */
@@ -178,8 +284,19 @@ a {
   padding: 0.9rem;
   background: var(--card);
   border-radius: 0.5rem;
-  border: 1px solid rgba(241,245,249,0.6);
+  border: 1px solid var(--border);
   overflow-wrap: anywhere;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+}
+
+.skeleton {
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--muted) 24%, var(--card));
+  animation: skeletonPulse 1.4s ease-in-out infinite;
 }
 .post-item .meta {
   font-size: 0.85rem;
@@ -284,7 +401,7 @@ a {
 }
 
 /* 讓主題切換時，全站背景與文字顏色柔和過渡 */
-html, body, .card, .btn, .input, textarea {
+html, body, .card, .panel-item, .modal-panel, .btn, .input, textarea {
   transition: background-color 0.8s ease, color 0.8s ease, border-color 0.8s ease;
 }
 

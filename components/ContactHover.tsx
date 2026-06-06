@@ -47,7 +47,7 @@ export default function ContactHover({ content, top = 16, right = 16 }: Props) {
           aria-haspopup="dialog"
           aria-expanded={open}
           onClick={() => setOpen(value => !value)}
-          className="btn btn-ghost px-3 py-2 rounded-md shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="btn btn-ghost px-3 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
         >
           ☎️ Contact 
         </button>
@@ -69,19 +69,12 @@ export default function ContactHover({ content, top = 16, right = 16 }: Props) {
             zIndex: 60,
           }}
         >
-          <div className="bg-white border border-gray-100 rounded-lg shadow-lg p-4 text-sm text-gray-800">
-            {/* 小箭頭 */}
-            <div style={{ position: 'absolute', right: 12, top: -6, width: 12, height: 6, overflow: 'hidden' }}>
-              <svg width="24" height="12" viewBox="0 0 24 12" className="block">
-                <path d="M12 0 L24 12 H0 Z" fill="white" stroke="rgba(0,0,0,0.06)" />
-              </svg>
-            </div>
-
+          <div className="modal-panel w-auto min-w-[250px] overflow-visible p-4 text-sm">
             {/* 內容（可自訂） */}
             <div>
               {content ?? (
                 <>
-                  <div className="font-medium text-gray-900 mb-1">聯絡方式</div>
+                  <div className="font-medium mb-1">聯絡方式</div>
                   <div className="kv mb-1">Email: <a className="text-indigo-600">allenchen0121@gmail.com</a></div>
                   <div className="kv">Line: <a className="text-indigo-600">0970555098</a></div>
                 </>
