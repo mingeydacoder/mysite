@@ -15,11 +15,12 @@ interface Post {
   content: string
   created_at: string
   user_id: string
-  profiles?: { display_name?: string }
+  profiles?: Profile
 }
 
 interface Profile {
   display_name?: string
+  avatar_url?: string
 }
 
 interface Announcement {
@@ -37,6 +38,38 @@ const SITE_OWNER = {
   bio: '注意：一般用戶無需註冊帳號'
 }
 
+function UserAvatar({ profile, fallbackName, size = 'md' }: {
+  profile?: Profile | null
+  fallbackName?: string | null
+  size?: 'sm' | 'md' | 'lg'
+}) {
+  const sizeClass = {
+    sm: 'h-10 w-10 text-sm',
+    md: 'h-12 w-12 text-base',
+    lg: 'h-20 w-20 text-xl',
+  }[size]
+  const initial = (profile?.display_name || fallbackName || '?').trim().charAt(0).toUpperCase()
+
+  if (profile?.avatar_url) {
+    return (
+      <img
+        src={profile.avatar_url}
+        alt={`${profile.display_name || fallbackName || '使用者'}的頭像`}
+        className={`${sizeClass} shrink-0 rounded-full border border-gray-200 object-cover`}
+      />
+    )
+  }
+
+  return (
+    <div
+      aria-label={`${profile?.display_name || fallbackName || '使用者'}的預設頭像`}
+      className={`${sizeClass} flex shrink-0 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700`}
+    >
+      {initial}
+    </div>
+  )
+}
+
 
 export default function HomePage() {
   const supabase = useMemo(() => createBrowserSupabaseClient(), [])
@@ -45,6 +78,7 @@ export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [nameInput, setNameInput] = useState('')
   const [isSavingName, setIsSavingName] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [isPosting, setIsPosting] = useState(false)
 
   // auth form state
@@ -114,21 +148,24 @@ export default function HomePage() {
     } else {
       const { data: profilesData } = await sb
         .from('profiles')
-        .select('user_id, display_name')
+        .select('user_id, display_name, avatar_url')
         .in('user_id', userIds)
 
-      const profiles = (profilesData ?? []) as { user_id: string; display_name?: string }[]
-      const nameById = new Map<string, string | undefined>()
-      for (const pr of profiles) nameById.set(pr.user_id, pr.display_name)
+      const profiles = (profilesData ?? []) as (Profile & { user_id: string })[]
+      const profileById = new Map<string, Profile>()
+      for (const pr of profiles) profileById.set(pr.user_id, {
+        display_name: pr.display_name,
+        avatar_url: pr.avatar_url,
+      })
 
       const postsWithProfiles = postsList.map(p => ({
         ...p,
-        profiles: { display_name: nameById.get(p.user_id) ?? undefined },
+        profiles: profileById.get(p.user_id),
       }))
       setPosts(postsWithProfiles)
     }
 
-    const { data: myProfile } = await sb.from('profiles').select('display_name').eq('user_id', uid).maybeSingle()
+    const { data: myProfile } = await sb.from('profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
     setProfile(myProfile ?? null)
     if (myProfile?.display_name) setNameInput(myProfile.display_name)
   }, [])
@@ -217,6 +254,49 @@ export default function HomePage() {
       setProfile({ display_name })
       fetchProfileAndPosts(supabase, user.id)
     }
+  }
+
+  async function uploadAvatar(file: File) {
+    if (!supabase || !user) return alert('請先登入')
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) return alert('頭像僅支援 JPG、PNG 或 WebP')
+    if (file.size > 5 * 1024 * 1024) return alert('頭像大小不可超過 5 MB')
+
+    setIsUploadingAvatar(true)
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const filePath = `${user.id}/avatar-${Date.now()}.${extension}`
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { cacheControl: '3600', upsert: false })
+
+    if (uploadError) {
+      setIsUploadingAvatar(false)
+      alert('頭像上傳失敗：' + uploadError.message)
+      return
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath)
+    const displayName = profile?.display_name || user.email?.split('@')[0] || '使用者'
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        user_id: user.id,
+        display_name: displayName,
+        avatar_url: publicUrlData.publicUrl,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+
+    setIsUploadingAvatar(false)
+    if (profileError) {
+      await supabase.storage.from('avatars').remove([filePath])
+      alert('頭像儲存失敗：' + profileError.message)
+      return
+    }
+
+    setProfile(current => ({ ...current, display_name: displayName, avatar_url: publicUrlData.publicUrl }))
+    setNameInput(displayName)
+    await fetchProfileAndPosts(supabase, user.id)
   }
 
   // ---------- Post ----------
@@ -428,13 +508,34 @@ export default function HomePage() {
           <section className="md:col-span-2 space-y-6">
             <div className="card">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-                <div>
-                  <div className="kv">已登入</div>
-                  <div className="font-medium break-all">{profile?.display_name ?? user.email}</div>
+                <div className="flex items-center gap-3">
+                  <UserAvatar profile={profile} fallbackName={user.email} size="md" />
+                  <div>
+                    <div className="kv">已登入</div>
+                    <div className="font-medium break-all">{profile?.display_name ?? user.email}</div>
+                  </div>
                 </div>
                 <button className="btn btn-ghost sm:w-auto" onClick={signOut}>
                   登出
                 </button>
+              </div>
+
+              <div className="mb-4">
+                <label className={`btn btn-ghost w-full sm:w-auto ${isUploadingAvatar ? 'cursor-wait opacity-60' : ''}`}>
+                  {isUploadingAvatar ? '頭像上傳中...' : profile?.avatar_url ? '更換頭像' : '上傳頭像'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={isUploadingAvatar}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) uploadAvatar(file)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
+                <div className="kv mt-2">支援 JPG、PNG、WebP，最大 5 MB</div>
               </div>
 
               {!profile?.display_name && (
@@ -476,9 +577,14 @@ export default function HomePage() {
                 <ul className="space-y-4">
                   {posts.map((p) => (
                     <li key={p.id} className="post-item">
-                      <div className="meta">{new Date(p.created_at).toLocaleString()}</div>
-                      <div className="font-medium">
-                        {p.profiles?.display_name ?? '匿名'}
+                      <div className="flex items-center gap-3">
+                        <UserAvatar profile={p.profiles} fallbackName="匿名" size="sm" />
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">
+                            {p.profiles?.display_name ?? '匿名'}
+                          </div>
+                          <div className="meta mb-0">{new Date(p.created_at).toLocaleString()}</div>
+                        </div>
                       </div>
                       <div className="mt-2 whitespace-pre-wrap break-words">{p.content}</div>
                     </li>
